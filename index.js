@@ -1,21 +1,19 @@
 const express = require("express");
+const bodyParse = require("body-parser");
 
 const app = express();
-const PORT =process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
+
+app.use(bodyParse.urlencoded({ extended: true}));
+app.use(bodyParse.json());
 
 
 app.get("/", (req,res) =>{
-    res.send("Hello world");
+    res.status(200).send("Hola Tincode");
 });
 
 
-
-//Esto serian un metodo
-app.get("/welcome", (req,res) =>{
-    res.send("Hello world");
-});
-
-app.get("/welcome", (req,res) =>{
+app.post("/welcome", (req,res) =>{
     const { username } = req.body;
     res.send(`Hola ${username}`);
 });

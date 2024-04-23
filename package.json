@@ -7,9 +7,11 @@
     "start": "node ./index.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "TheRockex <115924688+TheRockex@users.noreply.github.com>",
   "license": "ISC",
   "dependencies": {
+    "body-parse": "^0.1.0",
     "express": "^4.19.2"
-  }
+  },
+  "repository": "https://github.com/urchoiceals/railwayserver.git"
 }
