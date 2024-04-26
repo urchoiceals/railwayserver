@@ -9,12 +9,10 @@ app.use(bodyParse.json());
 
 const mysql = require('mysql');
 
-const connection = mysql.createConnection({
-  host: 'viaduct.proxy.rlwy.net',
-  user: 'root',
-  password: 'dCWwchdFnRuZMnZhWFyLRRQHGByISwtk',
-  database: 'railway'
-});
+const dbUrl = 'mysql://root:dCWwchdFnRuZMnZhWFyLRRQHGByISwtk@viaduct.proxy.rlwy.net:21120/railway';
+
+const connection = mysql.createConnection(dbUrl);
+
 
 connection.connect((err) => {
   if (err) {
@@ -50,12 +48,12 @@ app.post("/user/register", (req, res) => {
 
         connection.query('INSERT INTO users (email_user, nick_user, img_user, pass_user) VALUES (?, ?, ?, ?)', [email, nick, img, contra], (error, results) => {
             if (error) {
-                return res.status(500).json({ error: 'Error interno del servidor' });
+                return res.status(500).json({ error: 'Error interno del servidor1' });
             }
 
             connection.query('SELECT * FROM users WHERE id_user = ?', results.insertId, (error, results) => {
                 if (error) {
-                    return res.status(500).json({ error: 'Error interno del servidor' });
+                    return res.status(500).json({ error: 'Error interno del servidor2' });
                 }
 
                 const insertedUser = results[0];
@@ -80,12 +78,100 @@ app.post("/user/register", (req, res) => {
         return res.status(401).json({ error: "Credenciales incorrectas" });
       }
       const user = results[0];
-      res.status(200).json(user); // Devuelve los datos del usuario como respuesta
+      res.status(200).json(user);
     });
 });
 
+app.get("/users", (req, res) => {
+    connection.query('SELECT * FROM users', (error, results) => {
+        if (error) {
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        res.status(200).json(results);
+    });
+});
+
+
+
+//--------------------------------------ELEMENTS-------------------------------------------------------------------------------------------------------
+
+
+
+app.get("/elements/:categoryId", (req, res) => {
+    const categoryId = req.params.categoryId;
+    const query = `
+        SELECT elements.*, elemcat.victories 
+        FROM elemcat
+        INNER JOIN elements ON elemcat.id_elem = elements.id_elem
+        INNER JOIN categories ON elemcat.id_cat = categories.id_cat
+        WHERE categories.id_cat = ?
+        ORDER BY elemcat.victories DESC
+    `;
+    
+    connection.query(query, [categoryId], (error, results) => {
+        if (error) {
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        
+        res.status(200).json(results);
+    });
+});
+
+
+//--------------------------------------ELEMENTS-------------------------------------------------------------------------------------------------------
+
+app.get("/categories", (req, res) => {
+    connection.query('SELECT * FROM categories', (error, results) => {
+        if (error) {
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        res.status(200).json(results);
+    });
+});
   
-  
+
+
+
+//--------------------------------------FRIENDS-------------------------------------------------------------------------------------------------------
+
+
+app.post("/friends", (req, res) => {
+    const { id_us1, id_us2 } = req.body;
+
+    connection.query('INSERT INTO friends (id_us1, id_us2, estado) VALUES (?, ?, ?)', [id_us1, id_us2, 'pendiente'], (error, results) => {
+        if (error) {
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        res.status(201).json({ message: 'Inserción exitosa en la tabla friends' });
+    });
+});
+
+
+app.put("/friends/update", (req, res) => {
+    const { id_us1, id_us2, nuevoEstado } = req.body;
+
+    if (nuevoEstado === 'Aceptada') {
+        connection.query('UPDATE friends SET estado = ? WHERE (id_us1 = ? AND id_us2 = ?) OR (id_us1 = ? AND id_us2 = ?)', ['Aceptada', id_us1, id_us2, id_us2, id_us1], (error, results) => {
+            if (error) {
+                return res.status(500).json({ error: 'Error interno del servidor' });
+            }
+            res.status(200).json({ message: 'Actualización exitosa del estado a Aceptada' });
+        });
+    } else if (nuevoEstado === 'Denegado') {
+        connection.query('DELETE FROM friends WHERE (id_us1 = ? AND id_us2 = ?) OR (id_us1 = ? AND id_us2 = ?)', [id_us1, id_us2, id_us2, id_us1], (error, results) => {
+            if (error) {
+                return res.status(500).json({ error: 'Error interno del servidor' });
+            }
+            res.status(200).json({ message: 'Eliminación exitosa de la relación' });
+        });
+    } else {
+        res.status(400).json({ error: 'El nuevo estado proporcionado no es válido' });
+    }
+});
+
+
+
+//--------------------------------------FUNCIONA-------------------------------------------------------------------------------------------------------
 
 app.listen(PORT, () => {
     console.log("server running on port", 3000);
