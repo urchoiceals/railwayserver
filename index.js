@@ -46,9 +46,9 @@ app.post("/user/register", (req, res) => {
             return res.status(400).json({ error: "El usuario ya existe" });
         }
 
-        connection.query('INSERT INTO users (email_user, nick_user, img_user, pass_user) VALUES (?, ?, ?, ?)', [email, nick, img, contra], (error, results) => {
+        connection.query('INSERT INTO users (email_user, nick_user, pass_user, img_user) VALUES (?, ?, ?, ?)', [email, nick, contra, img], (error, results) => {
             if (error) {
-                return res.status(500).json({ error: 'Error interno del servidor1' });
+                return res.status(500).json({ error: 'Error interno del servidor1' + error});
             }
 
             connection.query('SELECT * FROM users WHERE id_user = ?', results.insertId, (error, results) => {
