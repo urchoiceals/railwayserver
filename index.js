@@ -97,7 +97,7 @@ app.get("/users", (req, res) => {
 
 
 
-app.get("/elements/:categoryId", (req, res) => {
+app.get("/elements/ranking/:categoryId", (req, res) => {
     const categoryId = req.params.categoryId;
     const query = `
         SELECT elements.*, elemcat.victories 
@@ -118,7 +118,26 @@ app.get("/elements/:categoryId", (req, res) => {
 });
 
 
-//--------------------------------------ELEMENTS-------------------------------------------------------------------------------------------------------
+app.get("/elements/:categoryId", (req, res) => {
+    const categoryId = req.params.categoryId;
+    const query = `
+        SELECT elements.*, elemcat.victories 
+        FROM elemcat
+        INNER JOIN elements ON elemcat.id_elem = elements.id_elem
+        INNER JOIN categories ON elemcat.id_cat = categories.id_cat
+        WHERE categories.id_cat = ?
+    `;
+    
+    connection.query(query, [categoryId], (error, results) => {
+        if (error) {
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        
+        res.status(200).json(results);
+    });
+});
+
+//--------------------------------------CATEGORIES-------------------------------------------------------------------------------------------------------
 
 app.get("/categories", (req, res) => {
     connection.query('SELECT * FROM categories', (error, results) => {
