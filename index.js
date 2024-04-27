@@ -188,6 +188,203 @@ app.put("/friends/update", (req, res) => {
     }
 });
 
+//--------------------------------------RROMGAME-------------------------------------------------------------------------------------------------------
+
+app.post("/elemcat/winner", (req, res) => {
+    const { id_elem, id_cat, victories } = req.body;
+    
+    connection.query('UPDATE elemcat SET victories = ? WHERE id_elem = ? AND id_cat = ?', [victories + 1, id_elem, id_cat], (error, results) => {
+        if (error) {
+            console.error('Error al actualizar la tabla elemcat:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        res.status(200).json({ message: 'Se ha actualizado la tabla elemcat correctamente' });
+    });
+});
+
+//--------------------------------------MULTIJUGADOR-------------------------------------------------------------------------------------------------------
+
+
+app.post("/room/create", (req, res) => {
+    const { id_cat, id_user } = req.body;
+    connection.query('INSERT INTO room (id_cat) VALUES (?)', [id_cat], (error, results) => {
+        if (error) {
+            console.error('Error al insertar la nueva sala:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        const roomId = results.insertId;
+        connection.query('INSERT INTO roomgame (id_room, id_user) VALUES (?, ?)', [roomId, id_user], (error, results) => {
+            if (error) {
+                console.error('Error al insertar el nuevo juego de sala:', error);
+                return res.status(500).json({ error: 'Error interno del servidor' });
+            }
+            res.status(201).json({ message: 'Nueva sala creada correctamente', roomId });
+        });
+    });
+});
+
+
+app.post("/room/join", (req, res) => {
+    const { id_room, id_user } = req.body;
+    connection.query('INSERT INTO roomgame (id_room, id_user) VALUES (?, ?)', [id_room, id_user], (error, results) => {
+        if (error) {
+            console.error('Error al insertar el nuevo juego de sala:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        res.status(201).json({ message: 'Nuevo juego de sala creado correctamente' });
+    });
+});
+
+
+
+
+
+app.post("/room/start", (req, res) => {
+    const { id_room, id_user } = req.body;
+
+    connection.query('UPDATE roomgame SET vote_game = "LISTO" WHERE id_room = ? AND id_user = ?', [id_room, id_user], (error, results) => {
+        if (error) {
+            console.error('Error al actualizar el estado del juego de sala:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        // Función para verificar si todos los jugadores han votado
+        function checkAllVotes() {
+            connection.query('SELECT * FROM roomgame WHERE id_room = ? AND vote_game = ""', [id_room], (error, results) => {
+                if (error) {
+                    console.error('Error al verificar el estado del juego de sala:', error);
+                    return res.status(500).json({ error: 'Error interno del servidor' });
+                }
+
+                // Si todos los jugadores han votado
+                if (results.length === 0) {
+                    // Actualizar el estado de la sala a "CLOSED"
+                    connection.query('UPDATE room SET status_room = "CLOSED" WHERE id_room = ?', [id_room], (error, results) => {
+                        if (error) {
+                            console.error('Error al actualizar el estado de la sala:', error);
+                            return res.status(500).json({ error: 'Error interno del servidor' });
+                        }
+                        // Actualizar el estado de votación para los usuarios de la sala a ""
+                        connection.query('UPDATE roomgame SET vote_game = "" WHERE id_room = ? AND id_user = ?', [id_room, id_user], (error, results) => {
+                            if (error) {
+                                console.error('Error al actualizar el estado de votación de los usuarios de la sala:', error);
+                                return res.status(500).json({ error: 'Error interno del servidor' });
+                            }
+                            console.log('Estado de votación del usuario de la sala actualizado correctamente');
+                            res.status(201).json({ message: 'La sala se ha cerrado correctamente'});
+                        });
+                    });
+                } else {
+                    // Si aún hay jugadores que no han votado, esperar un momento y volver a verificar
+                    console.log('Esperando a que todos los jugadores voten...');
+                    setTimeout(checkAllVotes, 1000); // Esperar 1 segundo antes de volver a verificar
+                }
+            });
+        }
+
+        // Comprobar si se realizó con éxito la actualización antes de comenzar a verificar los votos
+        if (results.affectedRows > 0) {
+            // Comenzar a verificar si todos los jugadores han votado
+            checkAllVotes();
+        } else {
+            console.error('No se encontraron juegos de sala para actualizar');
+            res.status(500).json({ error: 'No se encontraron juegos de sala para actualizar' });
+        }
+    });
+});
+
+
+app.post("/roomgame/vote", (req, res) => {
+    const { id_room, id_user, vote_game } = req.body;
+
+    // Función para verificar si todos los usuarios han votado
+    function checkAllVotes() {
+        connection.query('SELECT COUNT(*) AS pendingVotes FROM roomgame WHERE id_room = ? AND vote_game = ""', [id_room], (error, results) => {
+            if (error) {
+                console.error('Error al comprobar si todos los usuarios han votado:', error);
+                return res.status(500).json({ error: 'Error interno del servidor' });
+            }
+
+            const pendingVotes = results[0].pendingVotes;
+
+            if (pendingVotes === 0) {
+                // Todos los usuarios han votado, procedemos con la recolección y agrupación de votos
+                connection.query('SELECT vote_game, COUNT(*) AS vote_count FROM roomgame WHERE id_room = ? GROUP BY vote_game', [id_room], (error, results) => {
+                    if (error) {
+                        console.error('Error al recolectar los votos:', error);
+                        return res.status(500).json({ error: 'Error interno del servidor' });
+                    }
+                    connection.query('UPDATE roomgame SET vote_game = "" WHERE id_room = ? AND id_user = ?', [id_room, id_user], (error, results) => {
+                        if (error) {
+                            console.error('Error al actualizar el estado de votación de los usuarios de la sala:', error);
+                            return res.status(500).json({ error: 'Error interno del servidor' });
+                        }
+                        console.log('Estado de votación del usuario de la sala actualizado correctamente');
+                        res.status(200).json({ message: 'Todos los usuarios han votado', vote_counts: results });
+                    });
+                });
+            } else {
+                // Algunos usuarios aún no han votado, esperamos un momento y luego volvemos a verificar
+                console.log('Esperando a que todos los usuarios voten...');
+                setTimeout(checkAllVotes, 1000); // Esperar 1 segundo antes de volver a verificar
+            }
+        });
+    }
+
+    // Actualizar el voto del usuario en la tabla roomgame
+    connection.query('UPDATE roomgame SET vote_game = ? WHERE id_room = ? AND id_user = ?', [vote_game, id_room, id_user], (error, results) => {
+        if (error) {
+            console.error('Error al actualizar el voto en roomgame:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        // Verificar si todos los usuarios han votado
+        checkAllVotes();
+    });
+});
+
+
+
+
+
+app.post("/room/end", (req, res) => {
+    const { id_room, id_user } = req.body;
+
+    // Eliminar el registro de la sala para el usuario específico
+    connection.query('DELETE FROM roomgame WHERE id_room = ? AND id_user = ?', [id_room, id_user], (error, results) => {
+        if (error) {
+            console.error('Error al eliminar el juego de sala:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        // Verificar si el usuario era el último en la sala
+        connection.query('SELECT COUNT(*) AS userCount FROM roomgame WHERE id_room = ?', [id_room], (error, results) => {
+            if (error) {
+                console.error('Error al contar los usuarios de la sala:', error);
+                return res.status(500).json({ error: 'Error interno del servidor' });
+            }
+
+            const userCount = results[0].userCount;
+
+            // Si el usuario era el último en la sala, eliminar la sala
+            if (userCount === 0) {
+                connection.query('DELETE FROM room WHERE id_room = ?', [id_room], (error, results) => {
+                    if (error) {
+                        console.error('Error al eliminar la sala:', error);
+                        return res.status(500).json({ error: 'Error interno del servidor' });
+                    }
+                    console.log('Sala eliminada correctamente');
+                    res.status(200).json({ message: 'Sala eliminada correctamente' });
+                });
+            } else {
+                console.log('Juego de sala eliminado correctamente');
+                res.status(200).json({ message: 'Juego de sala eliminado correctamente' });
+            }
+        });
+    });
+});
+
+
 
 
 //--------------------------------------FUNCIONA-------------------------------------------------------------------------------------------------------
