@@ -237,6 +237,20 @@ app.post("/room/join", (req, res) => {
 });
 
 
+app.get("/room/:id_room/users", (req, res) => {
+    const id_room = req.params.id_room;
+
+    connection.query('SELECT rg.id_user, u.nick_user, rg.vote_game FROM roomgame rg JOIN users u ON rg.id_user = u.id_user WHERE rg.id_room = ?', [id_room], (error, results) => {
+        if (error) {
+            console.error('Error al recuperar los usuarios y sus votos:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        // Si se encontraron resultados, enviarlos como respuesta
+        res.status(200).json(results);
+    });
+});
+
 
 
 
