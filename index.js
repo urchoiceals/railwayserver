@@ -218,10 +218,11 @@ app.post("/room/create", (req, res) => {
                 console.error('Error al insertar el nuevo juego de sala:', error);
                 return res.status(500).json({ error: 'Error interno del servidor' });
             }
-            res.status(201).json({ message: 'Nueva sala creada correctamente', roomId });
+            res.status(201).json(roomId);
         });
     });
 });
+
 
 
 app.post("/room/join", (req, res) => {
