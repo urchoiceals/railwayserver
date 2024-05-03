@@ -206,8 +206,8 @@ app.post("/elemcat/winner", (req, res) => {
 
 
 app.post("/room/create", (req, res) => {
-    const { id_cat, id_user } = req.body;
-    connection.query('INSERT INTO room (id_cat) VALUES (?)', [id_cat], (error, results) => {
+    const { id_cat, id_user, nameRoom, passRoom} = req.body;
+    connection.query('INSERT INTO room (id_cat,name_room,pass_room) VALUES (?)', [id_cat,nameRoom,passRoom], (error, results) => {
         if (error) {
             console.error('Error al insertar la nueva sala:', error);
             return res.status(500).json({ error: 'Error interno del servidor' });
