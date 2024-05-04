@@ -148,6 +148,67 @@ app.get("/categories", (req, res) => {
     });
 });
   
+app.post("/categories/create", (req, res) => {
+    const { name_cat, img_cat, elements } = req.body;
+    
+    // Comenzar una transacción
+    connection.beginTransaction(function(err) {
+        if (err) {
+            console.error('Error al iniciar la transacción:', err);
+            return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción' });
+        }
+
+        // Insertar la categoría
+        connection.query('INSERT INTO category (name_cat, img_cat) VALUES (?, ?)', [name_cat, img_cat], (error, categoryResult) => {
+            if (error) {
+                connection.rollback(function() {
+                    console.error('Error al insertar la nueva categoría:', error);
+                    return res.status(500).json({ error: 'Error interno del servidor al insertar categoría' });
+                });
+            }
+            
+            const id_cat = categoryResult.insertId; // Obtener el ID de la categoría recién insertada
+            
+            // Insertar los elementos en bucle
+            elements.forEach(element => {
+                connection.query('INSERT INTO element (img_elem, name_elem) VALUES (?, ?)', [element.img_elem, element.name_elem], (error, elementResult) => {
+                    if (error) {
+                        connection.rollback(function() {
+                            console.error('Error al insertar el elemento:', error);
+                            return res.status(500).json({ error: 'Error interno del servidor al insertar elemento' });
+                        });
+                    }
+                    
+                    const id_elem = elementResult.insertId; // Obtener el ID del elemento recién insertado
+                    
+                    // Insertar en la tabla intermedia id_elemcat
+                    connection.query('INSERT INTO elemcat (id_elem, id_cat, victories) VALUES (?, ?, ?)', [id_elem, id_cat, element.victories], (error, elemCatResult) => {
+                        if (error) {
+                            connection.rollback(function() {
+                                console.error('Error al insertar en la tabla intermedia:', error);
+                                return res.status(500).json({ error: 'Error interno del servidor al insertar en tabla intermedia' });
+                            });
+                        }
+                    });
+                });
+            });
+
+            // Commit de la transacción si todas las inserciones fueron exitosas
+            connection.commit(function(err) {
+                if (err) {
+                    connection.rollback(function() {
+                        console.error('Error al hacer commit de la transacción:', err);
+                        return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
+                    });
+                }
+                
+                console.log('Transacción completada con éxito.');
+                res.status(200).json({ message: 'Transacción completada con éxito.' });
+            });
+        });
+    });
+});
+
 
 
 
@@ -188,7 +249,7 @@ app.put("/friends/update", (req, res) => {
     }
 });
 
-//--------------------------------------RROMGAME-------------------------------------------------------------------------------------------------------
+//--------------------------------------ROMGAME-------------------------------------------------------------------------------------------------------
 
 app.post("/elemcat/winner", (req, res) => {
     const { id_elem, id_cat, victories } = req.body;
@@ -213,34 +274,56 @@ app.post("/room/create", (req, res) => {
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
         const roomId = results.insertId;
-        connection.query('INSERT INTO roomgame (id_room, id_user) VALUES (?, ?)', [roomId, id_user], (error, results) => {
+        connection.query('INSERT INTO roomgame (id_room, id_user, admin) VALUES (?, ?, true)', [roomId, id_user], (error, results) => {
             if (error) {
                 console.error('Error al insertar el nuevo juego de sala:', error);
                 return res.status(500).json({ error: 'Error interno del servidor' });
             }
             res.status(201).json(roomId);
-        });
+        });        
     });
 });
 
 
 
 app.post("/room/join", (req, res) => {
-    const { id_room, id_user } = req.body;
-    connection.query('INSERT INTO roomgame (id_room, id_user) VALUES (?, ?)', [id_room, id_user], (error, results) => {
+    const { id_room, id_user, password } = req.body;
+
+    // Consulta para obtener la contraseña de la sala
+    connection.query('SELECT pass_room FROM room WHERE id_room = ?', [id_room], (error, results) => {
         if (error) {
-            console.error('Error al insertar el nuevo juego de sala:', error);
+            console.error('Error al obtener la contraseña de la sala:', error);
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
-        res.status(201).json({ message: 'Nuevo juego de sala creado correctamente' });
+
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'No se encontró la sala' });
+        }
+
+        const roomPassword = results[0].password;
+
+        // Verificar si la contraseña proporcionada coincide con la contraseña de la sala
+        if (password !== roomPassword) {
+            return res.status(401).json({ error: 'Contraseña incorrecta' });
+        }
+
+        // La contraseña coincide, proceder con la inserción del nuevo juego de sala
+        connection.query('INSERT INTO roomgame (id_room, id_user) VALUES (?, ?)', [id_room, id_user], (error, results) => {
+            if (error) {
+                console.error('Error al insertar el nuevo juego de sala:', error);
+                return res.status(500).json({ error: 'Error interno del servidor' });
+            }
+            res.status(201).json({ message: 'Nuevo juego de sala creado correctamente' });
+        });
     });
 });
+
 
 
 app.get("/room/:id_room/users", (req, res) => {
     const id_room = req.params.id_room;
 
-    connection.query('SELECT rg.id_user, u.nick_user, rg.vote_game FROM roomgame rg JOIN users u ON rg.id_user = u.id_user WHERE rg.id_room = ?', [id_room], (error, results) => {
+    connection.query('SELECT rg.id_user, u.nick_user, rg.vote_game, rg.admin FROM roomgame rg JOIN users u ON rg.id_user = u.id_user WHERE rg.id_room = ?', [id_room], (error, results) => {
         if (error) {
             console.error('Error al recuperar los usuarios y sus votos:', error);
             return res.status(500).json({ error: 'Error interno del servidor' });
@@ -250,6 +333,7 @@ app.get("/room/:id_room/users", (req, res) => {
         res.status(200).json(results);
     });
 });
+
 
 
 
