@@ -150,7 +150,7 @@ app.get("/categories", (req, res) => {
   
 app.post("/categories/create", (req, res) => {
     const { name_cat, img_cat, elements } = req.body;
-    
+
     // Comenzar una transacción
     connection.beginTransaction(function(err) {
         if (err) {
@@ -167,7 +167,7 @@ app.post("/categories/create", (req, res) => {
                 });
             }
             const id_cat = categoryResult.insertId; // Obtener el ID de la categoría recién insertada
-            
+
             // Insertar los elementos en bucle
             elements.forEach(element => {
                 connection.query('INSERT INTO elements (img_elem, name_elem) VALUES (?, ?)', [element.img_elem, element.name_elem], (error, elementResult) => {
@@ -177,9 +177,9 @@ app.post("/categories/create", (req, res) => {
                             return res.status(500).json({ error: 'Error interno del servidor al insertar elemento' });
                         });
                     }
-                    
+
                     const id_elem = elementResult.insertId; // Obtener el ID del elemento recién insertado
-                    
+
                     // Insertar en la tabla intermedia id_elemcat
                     connection.query('INSERT INTO elemcat (id_elem, id_cat, victories) VALUES (?, ?, ?)', [id_elem, id_cat, element.victories], (error, elemCatResult) => {
                         if (error) {
@@ -200,7 +200,7 @@ app.post("/categories/create", (req, res) => {
                         return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
                     });
                 }
-                
+
                 console.log('Transacción completada con éxito.');
                 res.status(200).json({ message: 'Transacción completada con éxito.' });
             });
