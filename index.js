@@ -159,19 +159,18 @@ app.post("/categories/create", (req, res) => {
         }
 
         // Insertar la categoría
-        connection.query('INSERT INTO category (name_cat, img_cat) VALUES (?, ?)', [name_cat, img_cat], (error, categoryResult) => {
+        connection.query('INSERT INTO categories (name_cat, img_cat) VALUES (?, ?)', [name_cat, img_cat], (error, categoryResult) => {
             if (error) {
                 connection.rollback(function() {
                     console.error('Error al insertar la nueva categoría:', error);
                     return res.status(500).json({ error: 'Error interno del servidor al insertar categoría' });
                 });
             }
-            
             const id_cat = categoryResult.insertId; // Obtener el ID de la categoría recién insertada
             
             // Insertar los elementos en bucle
             elements.forEach(element => {
-                connection.query('INSERT INTO element (img_elem, name_elem) VALUES (?, ?)', [element.img_elem, element.name_elem], (error, elementResult) => {
+                connection.query('INSERT INTO elements (img_elem, name_elem) VALUES (?, ?)', [element.img_elem, element.name_elem], (error, elementResult) => {
                     if (error) {
                         connection.rollback(function() {
                             console.error('Error al insertar el elemento:', error);
