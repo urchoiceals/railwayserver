@@ -170,7 +170,7 @@ app.post("/categories/create", (req, res) => {
 
             // Insertar los elementos en bucle
             elements.forEach(element => {
-                console.error('ESTOS SON LOS DATOS:', element.img_elem + element.name_elem);
+                console.log('Elemento recibido - img_elem:', element.img_elem, '- name_elem:', element.name_elem);
                 connection.query('INSERT INTO elements (img_elem, name_elem) VALUES (?, ?)', [element.img_elem, element.name_elem], (error, elementResult) => {
                     if (error) {
                         connection.rollback(function() {
