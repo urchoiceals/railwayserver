@@ -167,6 +167,16 @@ app.post("/categories/create", (req, res) => {
                 });
             }
             const id_cat = categoryResult.insertId; // Obtener el ID de la categoría recién insertada
+           
+            for (let i = 0; i < elements.length; i++) {
+                const element = elements[i];
+                console.log('Elemento recibido:');
+                console.log('ID: ' + element.id_elem);
+                console.log('Imagen: ' + element.img_elem);
+                console.log('Nombre: ' + element.name_elem);
+                console.log('Victorias: ' + element.victories);
+            }
+
 
             // Insertar los elementos en bucle
             elements.forEach(element => {
