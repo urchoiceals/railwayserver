@@ -168,9 +168,9 @@ app.post("/categories/create", (req, res) => {
             }
             const id_cat = categoryResult.insertId; // Obtener el ID de la categoría recién insertada
 
-
-            const element = elements[0]; 
             // Insertar los elementos en bucle
+            elements.forEach(element => {
+                console.error('ESTOS SON LOS DATOS:', element.img_elem + element.name_elem);
                 connection.query('INSERT INTO elements (img_elem, name_elem) VALUES (?, ?)', [element.img_elem, element.name_elem], (error, elementResult) => {
                     if (error) {
                         connection.rollback(function() {
@@ -191,7 +191,7 @@ app.post("/categories/create", (req, res) => {
                         }
                     });
                 });
-           
+            });
 
             // Commit de la transacción si todas las inserciones fueron exitosas
             connection.commit(function(err) {
