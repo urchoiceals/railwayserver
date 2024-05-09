@@ -470,7 +470,6 @@ app.post("/roomgame/vote", (req, res) => {
 
 
 
-
 app.post("/room/end", (req, res) => {
     const { id_room, id_user } = req.body;
 
@@ -490,23 +489,47 @@ app.post("/room/end", (req, res) => {
 
             const userCount = results[0].userCount;
 
-            // Si hay usuarios en la sala, actualizar al primero como administrador
-            if (userCount > 0) {
-                connection.query('UPDATE roomgame SET admin = 1 WHERE id_room = ? ORDER BY id_roomgame LIMIT 1', [id_room], (error, results) => {
+            if (userCount === 0) {
+                // Si no quedan usuarios en la sala, eliminar la sala
+                connection.query('DELETE FROM room WHERE id_room = ?', [id_room], (error, results) => {
                     if (error) {
-                        console.error('Error al actualizar el primer usuario como administrador:', error);
+                        console.error('Error al eliminar la sala:', error);
                         return res.status(500).json({ error: 'Error interno del servidor' });
                     }
-                    console.log('Primer usuario actualizado como administrador');
-                    res.status(200).json({ message: 'Primer usuario actualizado como administrador' });
+                    console.log('Sala eliminada correctamente');
+                    res.status(200).json({ message: 'Sala eliminada correctamente' });
                 });
             } else {
-                console.log('Juego de sala eliminado correctamente');
-                res.status(200).json({ message: 'Juego de sala eliminado correctamente' });
+                // Si aún quedan usuarios en la sala, verificar si hay alguno con admin = 1
+                connection.query('SELECT COUNT(*) AS adminCount FROM roomgame WHERE id_room = ? AND admin = 1', [id_room], (error, results) => {
+                    if (error) {
+                        console.error('Error al contar los usuarios administradores de la sala:', error);
+                        return res.status(500).json({ error: 'Error interno del servidor' });
+                    }
+
+                    const adminCount = results[0].adminCount;
+
+                    if (adminCount === 0) {
+                        // Si no hay usuarios administradores en la sala, actualizar al primero como administrador
+                        connection.query('UPDATE roomgame SET admin = 1 WHERE id_room = ? ORDER BY id_roomgame LIMIT 1', [id_room], (error, results) => {
+                            if (error) {
+                                console.error('Error al actualizar el primer usuario como administrador:', error);
+                                return res.status(500).json({ error: 'Error interno del servidor' });
+                            }
+                            console.log('Primer usuario actualizado como administrador');
+                            res.status(200).json({ message: 'Primer usuario actualizado como administrador' });
+                        });
+                    } else {
+                        console.log('No se necesita actualizar al primer usuario como administrador');
+                        res.status(200).json({ message: 'No se necesita actualizar al primer usuario como administrador' });
+                    }
+                });
             }
         });
     });
 });
+
+
 
 
 
