@@ -309,10 +309,10 @@ app.post("/room/join", (req, res) => {
         if (results.length === 0) {
             return res.status(404).json({ error: 'No se encontró la sala' });
         }
+        const roomPassword = results[0].pass_room;
 
-        const roomPassword = results[0].password;
 
-        // Verificar si la contraseña proporcionada coincide con la contraseña de la sala
+        // Verificar si la contraseña poprorcionada coincide con la contraseña de la sala
         if (password !== roomPassword) {
             return res.status(401).json({ error: 'Contraseña incorrecta' });
         }
@@ -323,7 +323,7 @@ app.post("/room/join", (req, res) => {
                 console.error('Error al insertar el nuevo juego de sala:', error);
                 return res.status(500).json({ error: 'Error interno del servidor' });
             }
-            res.status(201).json({ message: 'Nuevo juego de sala creado correctamente' });
+            res.status(201).json({ message: 'Se ha unido correctamente' });
         });
     });
 });
