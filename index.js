@@ -23,7 +23,7 @@ connection.connect((err) => {
 });
 
 app.get("/", (req,res) =>{
-    res.status(200).send("Hola Tincode");
+    res.status(200).send("Hola Gay");
 });
 
 
@@ -259,7 +259,24 @@ app.put("/friends/update", (req, res) => {
     }
 });
 
-//--------------------------------------ROMGAME-------------------------------------------------------------------------------------------------------
+
+//--------------------------------------ROOM-------------------------------------------------------------------------------------------------------
+
+app.get("/rooms", (req, res) => {
+    // Realizar la consulta SQL para obtener los datos de la tabla "room", contar los usuarios en cada sala y obtener la imagen de la categoría asociada
+    connection.query('SELECT room.*, COUNT(roomgame.id_user) AS userCount, category.img_cat FROM room LEFT JOIN roomgame ON room.id_room = roomgame.id_room LEFT JOIN category ON room.id_cat = category.id_cat GROUP BY room.id_room', (error, results) => {
+        if (error) {
+            console.error('Error al obtener los datos de la tabla room:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        // Devolver los resultados como respuesta en formato JSON
+        res.status(200).json(results);
+    });
+});
+
+
+
+//--------------------------------------ROOMGAME-------------------------------------------------------------------------------------------------------
 
 app.post("/elemcat/winner", (req, res) => {
     const { id_elem, id_cat, victories } = req.body;
@@ -466,7 +483,7 @@ app.post("/room/end", (req, res) => {
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
 
-        // Verificar si el usuario era el último en la sala
+        // Verificar si todavía hay usuarios en la sala
         connection.query('SELECT COUNT(*) AS userCount FROM roomgame WHERE id_room = ?', [id_room], (error, results) => {
             if (error) {
                 console.error('Error al contar los usuarios de la sala:', error);
@@ -475,15 +492,15 @@ app.post("/room/end", (req, res) => {
 
             const userCount = results[0].userCount;
 
-            // Si el usuario era el último en la sala, eliminar la sala
-            if (userCount === 0) {
-                connection.query('DELETE FROM room WHERE id_room = ?', [id_room], (error, results) => {
+            // Si hay usuarios en la sala, actualizar al primero como administrador
+            if (userCount > 0) {
+                connection.query('UPDATE roomgame SET admin = 1 WHERE id_room = ? ORDER BY id_roomgame LIMIT 1', [id_room], (error, results) => {
                     if (error) {
-                        console.error('Error al eliminar la sala:', error);
+                        console.error('Error al actualizar el primer usuario como administrador:', error);
                         return res.status(500).json({ error: 'Error interno del servidor' });
                     }
-                    console.log('Sala eliminada correctamente');
-                    res.status(200).json({ message: 'Sala eliminada correctamente' });
+                    console.log('Primer usuario actualizado como administrador');
+                    res.status(200).json({ message: 'Primer usuario actualizado como administrador' });
                 });
             } else {
                 console.log('Juego de sala eliminado correctamente');
@@ -492,6 +509,7 @@ app.post("/room/end", (req, res) => {
         });
     });
 });
+
 
 
 
