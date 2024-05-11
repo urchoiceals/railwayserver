@@ -140,13 +140,14 @@ app.get("/elements/:categoryId", (req, res) => {
 //--------------------------------------CATEGORIES-------------------------------------------------------------------------------------------------------
 
 app.get("/categories", (req, res) => {
-    connection.query('SELECT * FROM categories', (error, results) => {
+    connection.query('SELECT id_cat, name_cat, CONVERT(img_cat USING utf8) AS img_cat FROM categories', (error, results) => {
         if (error) {
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
         res.status(200).json(results);
     });
 });
+
   
 app.post("/categories/create", (req, res) => {
     const { name_cat, img_cat, elements } = req.body;
