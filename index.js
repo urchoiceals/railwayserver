@@ -140,17 +140,33 @@ app.get("/elements/:categoryId", (req, res) => {
 //--------------------------------------CATEGORIES-------------------------------------------------------------------------------------------------------
 
 app.get("/categories", (req, res) => {
-    connection.query('SELECT id_cat, name_cat, CONVERT(img_cat USING utf8) AS img_cat FROM categories', (error, results) => {
+    connection.query('SELECT id_cat, name_cat, img_cat FROM categories', (error, results) => {
         if (error) {
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
-        res.status(200).json(results);
+
+        // Convertir las imágenes de las categorías a Base64
+        const categoriesWithBase64 = results.map(category => {
+            const imgBytes = category.img_cat;
+            const imgBase64 = Buffer.from(imgBytes).toString('base64');
+            return {
+                id_cat: category.id_cat,
+                name_cat: category.name_cat,
+                img_cat: imgBase64
+            };
+        });
+
+        res.status(200).json(categoriesWithBase64);
     });
 });
+
 
   
 app.post("/categories/create", (req, res) => {
     const { name_cat, img_cat, elements } = req.body;
+
+
+    img_cat = Buffer.from(img_cat, 'base64');
 
     // Comenzar una transacción
     connection.beginTransaction(function(err) {
