@@ -199,46 +199,38 @@ app.post("/categories/create", (req, res) => {
                 }
 
                 // Obtener los ID de los elementos recién insertados
-                connection.query('SELECT LAST_INSERT_ID() as lastId', (error, rows) => {
+                const elementIds = elementResult.insertIds;
+
+                // Construir los valores para la tabla intermedia
+                let elemCatValues = elements.map((element, index) => [elementIds[index], id_cat, element.victories]);
+
+                // Insertar en la tabla intermedia id_elemcat
+                connection.query('INSERT INTO elemcat (id_elem, id_cat, victories) VALUES ?', [elemCatValues], (error, elemCatResult) => {
                     if (error) {
                         connection.rollback(function() {
-                            console.error('Error al obtener el ID del último elemento insertado:', error);
-                            return res.status(500).json({ error: 'Error interno del servidor al obtener el ID del último elemento insertado' });
+                            console.error('Error al insertar en la tabla intermedia:', error);
+                            return res.status(500).json({ error: 'Error interno del servidor al insertar en tabla intermedia' });
                         });
                     }
 
-                    const elementIds = rows.map(row => row.lastId);
-
-                    // Construir los valores para la tabla intermedia
-                    let elemCatValues = elements.map((element, index) => [elementIds[index], id_cat, element.victories]);
-
-                    // Insertar en la tabla intermedia id_elemcat
-                    connection.query('INSERT INTO elemcat (id_elem, id_cat, victories) VALUES ?', [elemCatValues], (error, elemCatResult) => {
-                        if (error) {
+                    // Commit de la transacción si todas las inserciones fueron exitosas
+                    connection.commit(function(err) {
+                        if (err) {
                             connection.rollback(function() {
-                                console.error('Error al insertar en la tabla intermedia:', error);
-                                return res.status(500).json({ error: 'Error interno del servidor al insertar en tabla intermedia' });
+                                console.error('Error al hacer commit de la transacción:', err);
+                                return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
                             });
                         }
 
-                        // Commit de la transacción si todas las inserciones fueron exitosas
-                        connection.commit(function(err) {
-                            if (err) {
-                                connection.rollback(function() {
-                                    console.error('Error al hacer commit de la transacción:', err);
-                                    return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
-                                });
-                            }
-
-                            console.log('Transacción completada con éxito.');
-                            res.status(200).json({ message: 'Transacción completada con éxito.' });
-                        });
+                        console.log('Transacción completada con éxito.');
+                        res.status(200).json({ message: 'Transacción completada con éxito.' });
                     });
                 });
             });
         });
     });
 });
+
 
 
 
