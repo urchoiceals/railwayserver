@@ -4,8 +4,9 @@ const bodyParse = require("body-parser");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(bodyParse.json({ limit: '50mb' }));
-app.use(bodyParse.urlencoded({ limit: '50mb', extended: true }));
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+
 
 const mysql = require('mysql');
 
@@ -186,8 +187,8 @@ app.post("/categories/create", (req, res) => {
 
             const id_cat = categoryResult.insertId; // Obtener el ID de la categoría recién insertada
 
-            // Insertar los elementos en bucle
-            let query = 'INSERT INTO elements (img_elem, name_elem) VALUES ?';
+
+            let query = 'INSERT INTO elements (img_elem, name_elem) VALUES ?';     
             let elementValues = elements.map(element => [Buffer.from(element.img_elem, 'base64'), element.name_elem]);
 
             connection.query(query, [elementValues], (error, elementResult) => {
@@ -199,10 +200,10 @@ app.post("/categories/create", (req, res) => {
                 }
 
                 // Obtener los ID de los elementos recién insertados
-                const elementIds = elementResult.insertIds;
+                const elementIds = elementResult.insertId;
 
                 // Construir los valores para la tabla intermedia
-                let elemCatValues = elements.map((element, index) => [elementIds[index], id_cat, element.victories]);
+                let elemCatValues = elements.map(element => [elementIds, id_cat, element.victories]);
 
                 // Insertar en la tabla intermedia id_elemcat
                 connection.query('INSERT INTO elemcat (id_elem, id_cat, victories) VALUES ?', [elemCatValues], (error, elemCatResult) => {
@@ -230,7 +231,6 @@ app.post("/categories/create", (req, res) => {
         });
     });
 });
-
 
 
 
