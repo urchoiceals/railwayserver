@@ -363,6 +363,11 @@ path-to-regexp@0.1.7:
   resolved "https://registry.npmjs.org/path-to-regexp/-/path-to-regexp-0.1.7.tgz"
   integrity sha512-5DFkuoqlv1uYQKxy8omFBeJPQcdoE07Kv2sferDCrAq1ohOU+MSDswDIbnx3YAM60qIOnYa53wBhXW0EbMonrQ==
 
+platform-client@^0.0.1-security:
+  version "0.0.1-security"
+  resolved "https://registry.npmjs.org/platform-client/-/platform-client-0.0.1-security.tgz"
+  integrity sha512-oifhKI6EHm5Mb0y1t7T1KQ75qc+qLEsrTT74H+K2d4eNNZozByEEbdifvO/2cLUQQnvqKQeksmPregBGapyhNQ==
+
 process-nextick-args@~2.0.0:
   version "2.0.1"
   resolved "https://registry.npmjs.org/process-nextick-args/-/process-nextick-args-2.0.1.tgz"

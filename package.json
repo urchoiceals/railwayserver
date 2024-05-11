@@ -12,7 +12,8 @@
   "dependencies": {
     "body-parse": "^0.1.0",
     "express": "^4.19.2",
-    "mysql": "^2.18.1"
+    "mysql": "^2.18.1",
+    "platform-client": "^0.0.1-security"
   },
   "repository": "https://github.com/urchoiceals/railwayserver.git"
 }

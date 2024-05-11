@@ -263,7 +263,7 @@ app.put("/friends/update", (req, res) => {
 //--------------------------------------ROOM-------------------------------------------------------------------------------------------------------
 
 app.get("/rooms", (req, res) => {
-    connection.query('SELECT room.*, COUNT(roomgame.id_user) AS userCount, categories.img_cat FROM room LEFT JOIN roomgame ON room.id_room = roomgame.id_room LEFT JOIN categories ON room.id_cat = categories.id_cat GROUP BY room.id_room', (error, results) => {
+    connection.query('SELECT room.*, COUNT(roomgame.id_user) AS userCount, categories.img_cat FROM room LEFT JOIN roomgame ON room.id_room = roomgame.id_room LEFT JOIN categories ON room.id_cat = categories.id_cat WHERE room.status_room = "OPEN" GROUP BY room.id_room', (error, results) => {
         if (error) {
             console.error('Error al obtener los datos de la tabla room:', error);
             return res.status(500).json({ error: 'Error interno del servidor' });
