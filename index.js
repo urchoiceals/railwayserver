@@ -188,7 +188,7 @@ app.post("/categories/create", (req, res) => {
 
             // Insertar los elementos en bucle
             let query = 'INSERT INTO elements (img_elem, name_elem) VALUES ?';
-            let elementValues = elements.map(element => [element.img_elem, element.name_elem]);
+            let elementValues = elements.map(element => [Buffer.from(element.img_elem, 'base64'), element.name_elem]);
 
             connection.query(query, [elementValues], (error, elementResult) => {
                 if (error) {
