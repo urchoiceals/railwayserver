@@ -149,7 +149,11 @@ app.get("/categories", (req, res) => {
 });
   
 app.post("/categories/create", (req, res) => {
-    const { name_cat, img_cat, elements } = req.body;
+    // Extraer el nombre de la categoría y los elementos del objeto JSON en el cuerpo de la solicitud
+    const { name_cat, elements } = req.body;
+
+    // Extraer la imagen de la categoría de los datos multipartes
+    const img_cat = req.files.img_cat.data; // Aquí asumo que la imagen de la categoría llega como un campo llamado "img_cat" en los datos multipartes
 
     // Comenzar una transacción
     connection.beginTransaction(function(err) {
@@ -168,20 +172,10 @@ app.post("/categories/create", (req, res) => {
             }
             const id_cat = categoryResult.insertId; // Obtener el ID de la categoría recién insertada
            
-            for (let i = 0; i < elements.length; i++) {
-                const element = elements[i];
-                console.log('Elemento recibido:');
-                console.log('ID: ' + element.id_elem);
-                console.log('Imagen: ' + element.img_elem);
-                console.log('Nombre: ' + element.name_elem);
-                console.log('Victorias: ' + element.victories);
-            }
-
-
             // Insertar los elementos en bucle
             elements.forEach(element => {
-                console.log('Elemento recibido - img_elem:', element.img_elem, '- name_elem:', element.name_elem);
-                connection.query('INSERT INTO elements (img_elem, name_elem) VALUES (?, ?)', [element.img_elem, element.name_elem], (error, elementResult) => {
+                const img_elem = element.img_elem.data; // Aquí asumo que la imagen del elemento llega como un campo llamado "img_elem" en los datos multipartes
+                connection.query('INSERT INTO elements (img_elem, name_elem) VALUES (?, ?)', [img_elem, element.name_elem], (error, elementResult) => {
                     if (error) {
                         connection.rollback(function() {
                             console.error('Error al insertar el elemento:', error);
