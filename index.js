@@ -165,8 +165,8 @@ app.get("/categories", (req, res) => {
 app.post("/categories/create", (req, res) => {
     const { name_cat, img_cat, elements } = req.body;
 
-
-    img_cat = Buffer.from(img_cat, 'base64');
+    // Convertir la imagen Base64 a bytes
+    const imgBytes = Buffer.from(img_cat, 'base64');
 
     // Comenzar una transacción
     connection.beginTransaction(function(err) {
@@ -176,7 +176,7 @@ app.post("/categories/create", (req, res) => {
         }
 
         // Insertar la categoría
-        connection.query('INSERT INTO categories (name_cat, img_cat) VALUES (?, ?)', [name_cat, img_cat], (error, categoryResult) => {
+        connection.query('INSERT INTO categories (name_cat, img_cat) VALUES (?, ?)', [name_cat, imgBytes], (error, categoryResult) => {
             if (error) {
                 connection.rollback(function() {
                     console.error('Error al insertar la nueva categoría:', error);
