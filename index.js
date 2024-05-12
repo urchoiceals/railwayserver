@@ -141,7 +141,7 @@ app.get("/elements/:categoryId", (req, res) => {
                 id_elem: element.id_elem,
                 name_elem: element.name_elem,
                 victories: element.victories,
-                img_elem: imgBase64
+                img_elem: imgBase64,
             };
         });
 
@@ -178,7 +178,7 @@ app.get("/categories", (req, res) => {
 
 app.post("/categories/create", (req, res) => {
     const { name_cat, img_cat, elements } = req.body;
-    let elementIds = [];
+
     // Convertir la imagen Base64 a bytes
     const imgBytes = Buffer.from(img_cat, 'base64');
 
@@ -203,7 +203,7 @@ app.post("/categories/create", (req, res) => {
 
             let query = 'INSERT INTO elements (img_elem, name_elem) VALUES ?';     
             let elementValues = elements.map(element => [Buffer.from(element.img_elem, 'base64'), element.name_elem]);
-
+            let elementIds = [];
             connection.query(query, [elementValues], (error, elementResult) => {
                 if (error) {
                     connection.rollback(function() {
@@ -214,7 +214,7 @@ app.post("/categories/create", (req, res) => {
                 }
 
                 // Obtener los ID de los elementos recién insertados
-                elementIds = elementResult.map(result => result.insertId);
+                const elementIds = elementResult.insertId; // Este enfoque no es correcto
 
                 // Construir los valores para la tabla intermedia
                 let elemCatValues = elements.map(element => [elementIds, id_cat, element.victories]);
