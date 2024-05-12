@@ -118,7 +118,6 @@ app.get("/elements/ranking/:categoryId", (req, res) => {
     });
 });
 
-
 app.get("/elements/:categoryId", (req, res) => {
     const categoryId = req.params.categoryId;
     const query = `
@@ -134,9 +133,22 @@ app.get("/elements/:categoryId", (req, res) => {
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
         
-        res.status(200).json(results);
+        // Convertir las imágenes de los elementos a Base64
+        const elementsWithBase64 = results.map(element => {
+            const imgBytes = element.img_elem; // Suponiendo que la columna img_elem contiene los bytes de la imagen
+            const imgBase64 = Buffer.from(imgBytes).toString('base64');
+            return {
+                id_elem: element.id_elem,
+                name_elem: element.name_elem,
+                victories: element.victories,
+                img_elem: imgBase64
+            };
+        });
+
+        res.status(200).json(elementsWithBase64);
     });
 });
+
 
 //--------------------------------------CATEGORIES-------------------------------------------------------------------------------------------------------
   
