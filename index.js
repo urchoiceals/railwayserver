@@ -173,7 +173,7 @@ app.post("/categories/create", (req, res) => {
     connection.beginTransaction(function(err) {
         if (err) {
             console.error('Error al iniciar la transacción:', err);
-            return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción' });
+            return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción'});
         }
 
         // Insertar la categoría
@@ -183,10 +183,10 @@ app.post("/categories/create", (req, res) => {
                     console.error('Error al insertar la nueva categoría:', error);
                     return res.status(500).json({ error: 'Error interno del servidor al insertar categoría' });
                 });
+                return; // Detener la ejecución en caso de error
             }
 
             const id_cat = categoryResult.insertId; // Obtener el ID de la categoría recién insertada
-
 
             let query = 'INSERT INTO elements (img_elem, name_elem) VALUES ?';     
             let elementValues = elements.map(element => [Buffer.from(element.img_elem, 'base64'), element.name_elem]);
@@ -197,10 +197,11 @@ app.post("/categories/create", (req, res) => {
                         console.error('Error al insertar los elementos:', error);
                         return res.status(500).json({ error: 'Error interno del servidor al insertar elementos' });
                     });
+                    return; // Detener la ejecución en caso de error
                 }
 
                 // Obtener los ID de los elementos recién insertados
-                const elementIds = elementResult.insertId;
+                const elementIds = elementResult.insertId; // Este enfoque no es correcto
 
                 // Construir los valores para la tabla intermedia
                 let elemCatValues = elements.map(element => [elementIds, id_cat, element.victories]);
@@ -212,6 +213,7 @@ app.post("/categories/create", (req, res) => {
                             console.error('Error al insertar en la tabla intermedia:', error);
                             return res.status(500).json({ error: 'Error interno del servidor al insertar en tabla intermedia' });
                         });
+                        return; // Detener la ejecución en caso de error
                     }
 
                     // Commit de la transacción si todas las inserciones fueron exitosas
@@ -221,6 +223,7 @@ app.post("/categories/create", (req, res) => {
                                 console.error('Error al hacer commit de la transacción:', err);
                                 return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
                             });
+                            return; // Detener la ejecución en caso de error
                         }
 
                         console.log('Transacción completada con éxito.');
