@@ -204,8 +204,6 @@ app.post("/categories/create", (req, res) => {
             let query = 'INSERT INTO elements (img_elem, name_elem) VALUES ?';     
             let elementValues = elements.map(element => [Buffer.from(element.img_elem, 'base64'), element.name_elem]);
 
-            let elementMap = {};
-
             connection.query(query, [elementValues], (error, elementResult) => {
                 if (error) {
                     connection.rollback(function() {
@@ -215,14 +213,11 @@ app.post("/categories/create", (req, res) => {
                     return; // Detener la ejecución en caso de error
                 }
 
-                elementResult.forEach(result => {
-                    // Asociar el ID insertado con el elemento correspondiente
-                    elementMap[result.insertId] = elements.find(elem => elem.name_elem === result.name_elem);
-                });
-                
+                // Obtener los ID de los elementos recién insertados
+                const elementIds = elementResult.map(result => result.insertId);
 
                 // Construir los valores para la tabla intermedia
-                let elemCatValues = elementResult.map(result => [result.insertId, id_cat, elementMap[result.insertId].victories]);
+                let elemCatValues = elements.map(element => [elementIds, id_cat, element.victories]);
 
                 // Insertar en la tabla intermedia id_elemcat
                 connection.query('INSERT INTO elemcat (id_elem, id_cat, victories) VALUES ?', [elemCatValues], (error, elemCatResult) => {
@@ -252,6 +247,7 @@ app.post("/categories/create", (req, res) => {
         });
     });
 });
+
 
 
 
