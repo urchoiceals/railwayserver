@@ -178,7 +178,7 @@ app.get("/categories", (req, res) => {
 
 app.post("/categories/create", (req, res) => {
     const { name_cat, img_cat, elements } = req.body;
-
+    let elementIds = [];
     // Convertir la imagen Base64 a bytes
     const imgBytes = Buffer.from(img_cat, 'base64');
 
@@ -214,7 +214,7 @@ app.post("/categories/create", (req, res) => {
                 }
 
                 // Obtener los ID de los elementos recién insertados
-                const elementIds = elementResult.insertId; // Este enfoque no es correcto
+                elementIds = elementResult.map(result => result.insertId);
 
                 // Construir los valores para la tabla intermedia
                 let elemCatValues = elements.map(element => [elementIds, id_cat, element.victories]);
