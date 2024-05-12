@@ -201,9 +201,9 @@ app.post("/categories/create", (req, res) => {
 
             const id_cat = categoryResult.insertId; // Obtener el ID de la categoría recién insertada
 
-            let query = 'INSERT INTO elements (img_elem, name_elem) VALUES ?';     
-            let elementValues = elements.map(element => [Buffer.from(element.img_elem, 'base64'), element.name_elem]);
-            
+            let query = 'INSERT INTO elements (img_elem, name_elem, id_cat) VALUES ?';        
+            let elementValues = elements.map(element => [Buffer.from(element.img_elem, 'base64'), element.name_elem, id_cat]);
+
             connection.query(query, [elementValues], (error, elementResult) => {
                 if (error) {
                     connection.rollback(function() {
