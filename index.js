@@ -176,7 +176,7 @@ app.get("/categories", (req, res) => {
 
 
 
-app.post("/categories/create", (req, res) => {
+/*app.post("/categories/create", (req, res) => {
     const { name_cat, img_cat, elements } = req.body;
 
     // Convertir la imagen Base64 a bytes
@@ -246,8 +246,79 @@ app.post("/categories/create", (req, res) => {
             });
         });
     });
-});
+});*/
 
+app.post("/categories/create", (req, res) => {
+    const { name_cat, img_cat, elements } = req.body;
+
+    // Convertir la imagen Base64 a bytes
+    const imgBytes = Buffer.from(img_cat, 'base64');
+
+    // Comenzar una transacción
+    connection.beginTransaction(function(err) {
+        if (err) {
+            console.error('Error al iniciar la transacción:', err);
+            return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción'});
+        }
+
+        // Insertar la categoría
+        connection.query('INSERT INTO categories (name_cat, img_cat) VALUES (?, ?)', [name_cat, imgBytes], (error, categoryResult) => {
+            if (error) {
+                connection.rollback(function() {
+                    console.error('Error al insertar la nueva categoría:', error);
+                    return res.status(500).json({ error: 'Error interno del servidor al insertar categoría' });
+                });
+                return; // Detener la ejecución en caso de error
+            }
+
+            const id_cat = categoryResult.insertId; // Obtener el ID de la categoría recién insertada
+
+            let query = 'INSERT INTO elements (img_elem, name_elem) VALUES ?';     
+            let elementValues = elements.map(element => [Buffer.from(element.img_elem, 'base64'), element.name_elem]);
+
+            connection.query(query, [elementValues], (error, elementResult) => {
+                if (error) {
+                    connection.rollback(function() {
+                        console.error('Error al insertar los elementos:', error);
+                        return res.status(500).json({ error: 'Error interno del servidor al insertar elementos' });
+                    });
+                    return; // Detener la ejecución en caso de error
+                }
+
+                // Obtener los IDs de los elementos recién insertados
+                const elementIds = elementResult.map(result => result.insertId);
+
+                // Construir los valores para la tabla intermedia
+                let elemCatValues = elementIds.map((elementId, index) => [elementId, id_cat, elements[index].victories]);
+
+                // Insertar en la tabla intermedia elemcat
+                connection.query('INSERT INTO elemcat (id_elem, id_cat, victories) VALUES ?', [elemCatValues], (error, elemCatResult) => {
+                    if (error) {
+                        connection.rollback(function() {
+                            console.error('Error al insertar en la tabla intermedia:', error);
+                            return res.status(500).json({ error: 'Error interno del servidor al insertar en tabla intermedia' });
+                        });
+                        return; // Detener la ejecución en caso de error
+                    }
+
+                    // Commit de la transacción si todas las inserciones fueron exitosas
+                    connection.commit(function(err) {
+                        if (err) {
+                            connection.rollback(function() {
+                                console.error('Error al hacer commit de la transacción:', err);
+                                return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
+                            });
+                            return; // Detener la ejecución en caso de error
+                        }
+
+                        console.log('Transacción completada con éxito.');
+                        res.status(200).json({ message: 'Transacción completada con éxito.' });
+                    });
+                });
+            });
+        });
+    });
+});
 
 
 
