@@ -100,14 +100,16 @@ app.get("/users", (req, res) => {
 
 app.get("/elements/ranking/:categoryId", (req, res) => {
     const categoryId = req.params.categoryId;
-    const query = `
-        SELECT elements.*, elemcat.victories 
-        FROM elemcat
-        INNER JOIN elements ON elemcat.id_elem = elements.id_elem
-        INNER JOIN categories ON elemcat.id_cat = categories.id_cat
-        WHERE categories.id_cat = ?
-        ORDER BY elemcat.victories DESC
-    `;
+const query = `
+    SELECT elements.*, elemcat.victories 
+    FROM elemcat
+    INNER JOIN elements ON elemcat.id_elem = elements.id_elem
+    INNER JOIN categories ON elemcat.id_cat = categories.id_cat
+    WHERE categories.id_cat = ?
+    ORDER BY elemcat.victories DESC
+    LIMIT 5
+`;
+
     
     connection.query(query, [categoryId], (error, results) => {
         if (error) {
@@ -121,12 +123,11 @@ app.get("/elements/ranking/:categoryId", (req, res) => {
 app.get("/elements/:categoryId", (req, res) => {
     const categoryId = req.params.categoryId;
     const query = `
-        SELECT elements.*, elemcat.victories 
-        FROM elemcat
-        INNER JOIN elements ON elemcat.id_elem = elements.id_elem
-        INNER JOIN categories ON elemcat.id_cat = categories.id_cat
-        WHERE categories.id_cat = ?
-    `;
+    SELECT *
+    FROM elements
+    WHERE id_cat = ?
+`;
+
     
     connection.query(query, [categoryId], (error, results) => {
         if (error) {
@@ -175,7 +176,6 @@ app.get("/categories", (req, res) => {
 });
 
 
-
 app.post("/categories/create", (req, res) => {
     const { name_cat, img_cat, elements } = req.body;
 
@@ -204,6 +204,62 @@ app.post("/categories/create", (req, res) => {
             let query = 'INSERT INTO elements (img_elem, name_elem) VALUES ?';     
             let elementValues = elements.map(element => [Buffer.from(element.img_elem, 'base64'), element.name_elem]);
             
+            connection.query(query, [elementValues], (error, elementResult) => {
+                if (error) {
+                    connection.rollback(function() {
+                        console.error('Error al insertar los elementos:', error);
+                        return res.status(500).json({ error: 'Error interno del servidor al insertar elementos' });
+                    });
+                    return; // Detener la ejecución en caso de error
+                }
+
+                // Commit de la transacción si todas las inserciones fueron exitosas
+                connection.commit(function(err) {
+                    if (err) {
+                        connection.rollback(function() {
+                            console.error('Error al hacer commit de la transacción:', err);
+                            return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
+                        });
+                        return; // Detener la ejecución en caso de error
+                    }
+
+                    console.log('Transacción completada con éxito.');
+                    res.status(200).json({ message: 'Transacción completada con éxito.' });
+                });
+            });
+        });
+    });
+});
+
+
+
+/*app.post("/categories/create", (req, res) => {
+    const { name_cat, img_cat, elements } = req.body;
+
+    // Convertir la imagen Base64 a bytes
+    const imgBytes = Buffer.from(img_cat, 'base64');
+
+    // Comenzar una transacción
+    connection.beginTransaction(function(err) {
+        if (err) {
+            console.error('Error al iniciar la transacción:', err);
+            return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción'});
+        }
+
+        // Insertar la categoría
+        connection.query('INSERT INTO categories (name_cat, img_cat) VALUES (?, ?)', [name_cat, imgBytes], (error, categoryResult) => {
+            if (error) {
+                connection.rollback(function() {
+                    console.error('Error al insertar la nueva categoría:', error);
+                    return res.status(500).json({ error: 'Error interno del servidor al insertar categoría' });
+                });
+                return; // Detener la ejecución en caso de error
+            }
+
+            const id_cat = categoryResult.insertId; // Obtener el ID de la categoría recién insertada
+
+            let query = 'INSERT INTO elements (img_elem, name_elem) VALUES ?';     
+            let elementValues = elements.map(element => [Buffer.from(element.img_elem, 'base64'), element.name_elem]);
             connection.query(query, [elementValues], (error, elementResult) => {
                 if (error) {
                     connection.rollback(function() {
@@ -246,7 +302,7 @@ app.post("/categories/create", (req, res) => {
             });
         });
     });
-});
+});*/
 
 
 
