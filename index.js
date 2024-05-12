@@ -4,8 +4,8 @@ const bodyParse = require("body-parser");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(bodyParse.json({ limit: '50mb' }));
-app.use(bodyParse.urlencoded({ limit: '50mb', extended: true }));
+app.use(bodyParse.json({ limit: '100mb' }));
+app.use(bodyParse.urlencoded({ limit: '100mb', extended: true }));
 
 
 const mysql = require('mysql');
