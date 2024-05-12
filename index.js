@@ -203,7 +203,7 @@ app.post("/categories/create", (req, res) => {
 
             let query = 'INSERT INTO elements (img_elem, name_elem) VALUES ?';     
             let elementValues = elements.map(element => [Buffer.from(element.img_elem, 'base64'), element.name_elem]);
-
+            
             connection.query(query, [elementValues], (error, elementResult) => {
                 if (error) {
                     connection.rollback(function() {
@@ -214,7 +214,7 @@ app.post("/categories/create", (req, res) => {
                 }
 
                 // Obtener los ID de los elementos recién insertados
-                const elementIds = elementResult.map(result => result.insertId);
+                const elementIds = elementResult.insertId; // Este enfoque no es correcto
 
                 // Construir los valores para la tabla intermedia
                 let elemCatValues = elements.map(element => [elementIds, id_cat, element.victories]);
