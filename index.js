@@ -286,10 +286,48 @@ app.get("/rooms", (req, res) => {
             console.error('Error al obtener los datos de la tabla room:', error);
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
-        res.status(200).json(results);
+        
+        // Convertir las imágenes de las habitaciones a Base64
+        const roomsWithBase64 = results.map(room => {
+            const imgBytes = room.img_cat; // Suponiendo que la columna img_cat contiene los bytes de la imagen
+            const imgBase64 = Buffer.from(imgBytes).toString('base64');
+            return {
+                id_room: room.id_room,
+                pass_room: room.pass_room,
+                status_room: room.status_room,
+                id_cat: room.id_cat,
+                name_room: room.name_room,
+                userCount: room.userCount,
+                img_cat: imgBase64
+            };
+        });
+
+        res.status(200).json(roomsWithBase64);
     });
 });
 
+
+
+app.get("/categories", (req, res) => {
+    connection.query('SELECT id_cat, name_cat, img_cat FROM categories', (error, results) => {
+        if (error) {
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        // Convertir las imágenes de las categorías a Base64
+        const categoriesWithBase64 = results.map(category => {
+            const imgBytes = category.img_cat;
+            const imgBase64 = Buffer.from(imgBytes).toString('base64');
+            return {
+                id_cat: category.id_cat,
+                name_cat: category.name_cat,
+                img_cat: imgBase64
+            };
+        });
+
+        res.status(200).json(categoriesWithBase64);
+    });
+});
 
 
 //--------------------------------------ROOMGAME-------------------------------------------------------------------------------------------------------
