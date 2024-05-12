@@ -217,8 +217,9 @@ app.post("/categories/create", (req, res) => {
 
                 elementResult.forEach(result => {
                     // Asociar el ID insertado con el elemento correspondiente
-                    elementMap[result.insertId] = elements.shift(); // elements.shift() saca el primer elemento del arreglo 'elements'
+                    elementMap[result.insertId] = elements.find(elem => elem.name_elem === result.name_elem);
                 });
+                
 
                 // Construir los valores para la tabla intermedia
                 let elemCatValues = elementResult.map(result => [result.insertId, id_cat, elementMap[result.insertId].victories]);
