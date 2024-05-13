@@ -233,7 +233,7 @@ app.post("/categories/create", (req, res) => {
 
 //--------------------------------------FAVORITOS-------------------------------------------------------------------------------------------------------
 
-app.post('/insertarFavorito', (req, res) => {
+app.post('/fav/insert', (req, res) => {
     const { id_user, id_cat } = req.body;
   
     const query = 'INSERT INTO favs (id_user, id_cat) VALUES (?, ?)';
@@ -249,6 +249,24 @@ app.post('/insertarFavorito', (req, res) => {
       res.status(200).send('Favorito insertado correctamente');
     });
   });
+
+  app.delete('/fav/delete/:id_user/:id_cat', (req, res) => {
+    const id_user = req.params.id_user;
+    const id_cat = req.params.id_cat;
+
+    const query = 'DELETE FROM favs WHERE id_user = ? AND id_cat = ?';
+    const values = [id_user, id_cat];
+
+    connection.query(query, values, (err, result) => {
+        if (err) {
+            console.error('Error al eliminar:', err);
+            res.status(500).send('Error al eliminar de la base de datos');
+            return;
+        }
+        console.log('Favorito eliminado correctamente:', result);
+        res.status(200).send('Favorito eliminado correctamente');
+    });
+});
 
 
   app.get('/favoritos/:id_user', (req, res) => {
@@ -291,7 +309,7 @@ app.post('/insertarFavorito', (req, res) => {
 //--------------------------------------SAVED-------------------------------------------------------------------------------------------------------
 
 
-app.post('/insertarSaved', (req, res) => {
+app.post('/saved/insert', (req, res) => {
     const { id_user, id_cat } = req.body;
   
     const query = 'INSERT INTO saved (id_user, id_cat) VALUES (?, ?)';
@@ -307,6 +325,24 @@ app.post('/insertarSaved', (req, res) => {
       res.status(200).send('Favorito insertado correctamente');
     });
   });
+
+  app.delete('/saved/delete/:id_user/:id_cat', (req, res) => {
+    const id_user = req.params.id_user;
+    const id_cat = req.params.id_cat;
+
+    const query = 'DELETE FROM saved WHERE id_user = ? AND id_cat = ?';
+    const values = [id_user, id_cat];
+
+    connection.query(query, values, (err, result) => {
+        if (err) {
+            console.error('Error al eliminar:', err);
+            res.status(500).send('Error al eliminar de la base de datos');
+            return;
+        }
+        console.log('Saved eliminado correctamente:', result);
+        res.status(200).send('Saved eliminado correctamente');
+    });
+});
 
 
   app.get('/saved/:id_user', (req, res) => {
