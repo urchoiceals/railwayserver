@@ -231,83 +231,64 @@ app.post("/categories/create", (req, res) => {
     });
 });
 
+//--------------------------------------FAVORITOS-------------------------------------------------------------------------------------------------------
 
-
-/*app.post("/categories/create", (req, res) => {
-    const { name_cat, img_cat, elements } = req.body;
-
-    // Convertir la imagen Base64 a bytes
-    const imgBytes = Buffer.from(img_cat, 'base64');
-
-    // Comenzar una transacción
-    connection.beginTransaction(function(err) {
-        if (err) {
-            console.error('Error al iniciar la transacción:', err);
-            return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción'});
-        }
-
-        // Insertar la categoría
-        connection.query('INSERT INTO categories (name_cat, img_cat) VALUES (?, ?)', [name_cat, imgBytes], (error, categoryResult) => {
-            if (error) {
-                connection.rollback(function() {
-                    console.error('Error al insertar la nueva categoría:', error);
-                    return res.status(500).json({ error: 'Error interno del servidor al insertar categoría' });
-                });
-                return; // Detener la ejecución en caso de error
-            }
-
-            const id_cat = categoryResult.insertId; // Obtener el ID de la categoría recién insertada
-
-            let query = 'INSERT INTO elements (img_elem, name_elem) VALUES ?';     
-            let elementValues = elements.map(element => [Buffer.from(element.img_elem, 'base64'), element.name_elem]);
-            connection.query(query, [elementValues], (error, elementResult) => {
-                if (error) {
-                    connection.rollback(function() {
-                        console.error('Error al insertar los elementos:', error);
-                        return res.status(500).json({ error: 'Error interno del servidor al insertar elementos' });
-                    });
-                    return; // Detener la ejecución en caso de error
-                }
-
-                // Obtener los ID de los elementos recién insertados
-                const elementIds = elementResult.insertId; // Este enfoque no es correcto
-
-                // Construir los valores para la tabla intermedia
-                let elemCatValues = elements.map(element => [elementIds, id_cat, element.victories]);
-
-                // Insertar en la tabla intermedia id_elemcat
-                connection.query('INSERT INTO elemcat (id_elem, id_cat, victories) VALUES ?', [elemCatValues], (error, elemCatResult) => {
-                    if (error) {
-                        connection.rollback(function() {
-                            console.error('Error al insertar en la tabla intermedia:', error);
-                            return res.status(500).json({ error: 'Error interno del servidor al insertar en tabla intermedia' });
-                        });
-                        return; // Detener la ejecución en caso de error
-                    }
-
-                    // Commit de la transacción si todas las inserciones fueron exitosas
-                    connection.commit(function(err) {
-                        if (err) {
-                            connection.rollback(function() {
-                                console.error('Error al hacer commit de la transacción:', err);
-                                return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
-                            });
-                            return; // Detener la ejecución en caso de error
-                        }
-
-                        console.log('Transacción completada con éxito.');
-                        res.status(200).json({ message: 'Transacción completada con éxito.' });
-                    });
-                });
-            });
-        });
+app.post('/insertarFavorito', (req, res) => {
+    const { id_user, id_cat } = req.body;
+  
+    const query = 'INSERT INTO nombre_de_la_tabla (id_user, id_cat) VALUES (?, ?)';
+    const values = [id_user, id_cat];
+  
+    connection.query(query, values, (err, result) => {
+      if (err) {
+        console.error('Error al insertar:', err);
+        res.status(500).send('Error al insertar en la base de datos');
+        return;
+      }
+      console.log('Favorito insertado correctamente:', result);
+      res.status(200).send('Favorito insertado correctamente');
     });
-});*/
+  });
 
 
+  app.get('/favoritos/:id_user', (req, res) => {
+    const id_user = req.params.id_user;
+  
+    const query = `
+      SELECT favs.id_fav, favs.id_user, favs.id_cat, categories.name_cat, categories.img_cat
+      FROM favs
+      INNER JOIN categories ON favs.id_cat = categories.id_cat
+      WHERE favs.id_user = ?
+    `;
+  
+    connection.query(query, id_user, (err, results) => {
+      if (err) {
+        console.error('Error al obtener favoritos:', err);
+        res.status(500).send('Error al obtener favoritos de la base de datos');
+        return;
+      }
+  
+      if (results.length === 0) {
+        res.status(404).send('El usuario no tiene categorías favoritas');
+        return;
+      }
+  
+      const favoritosConDetalle = results.map(favorito => {
+        const imgBytes = Buffer.from(favorito.img_cat, 'base64').toString('base64');
+        return {
+          id_fav: favorito.id_fav,
+          id_user: favorito.id_user,
+          id_cat: favorito.id_cat,
+          name_cat: favorito.name_cat,
+          img_cat: imgBytes
+        };
+      });
+  
+      res.status(200).json(favoritosConDetalle);
+    });
+  });
 
-
-
+  
 //--------------------------------------FRIENDS-------------------------------------------------------------------------------------------------------
 
 
