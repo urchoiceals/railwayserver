@@ -236,7 +236,7 @@ app.post("/categories/create", (req, res) => {
 app.post('/insertarFavorito', (req, res) => {
     const { id_user, id_cat } = req.body;
   
-    const query = 'INSERT INTO nombre_de_la_tabla (id_user, id_cat) VALUES (?, ?)';
+    const query = 'INSERT INTO favs (id_user, id_cat) VALUES (?, ?)';
     const values = [id_user, id_cat];
   
     connection.query(query, values, (err, result) => {
@@ -288,7 +288,65 @@ app.post('/insertarFavorito', (req, res) => {
     });
   });
 
+//--------------------------------------SAVED-------------------------------------------------------------------------------------------------------
+
+
+app.post('/insertarSaved', (req, res) => {
+    const { id_user, id_cat } = req.body;
   
+    const query = 'INSERT INTO saved (id_user, id_cat) VALUES (?, ?)';
+    const values = [id_user, id_cat];
+  
+    connection.query(query, values, (err, result) => {
+      if (err) {
+        console.error('Error al insertar:', err);
+        res.status(500).send('Error al insertar en la base de datos');
+        return;
+      }
+      console.log('Guardado insertado correctamente:', result);
+      res.status(200).send('Favorito insertado correctamente');
+    });
+  });
+
+
+  app.get('/saved/:id_user', (req, res) => {
+    const id_user = req.params.id_user;
+
+    const query = `
+      SELECT saved.id_saved, saved.id_user, saved.id_cat, categories.name_cat, categories.img_cat
+      FROM saved
+      INNER JOIN categories ON saved.id_cat = categories.id_cat
+      WHERE saved.id_user = ?
+    `;
+
+    connection.query(query, id_user, (err, results) => {
+      if (err) {
+        console.error('Error al obtener guardados:', err);
+        res.status(500).send('Error al obtener guardados de la base de datos');
+        return;
+      }
+
+      if (results.length === 0) {
+        res.status(404).send('El usuario no tiene categorías guardadas');
+        return;
+      }
+
+      const savedConDetalle = results.map(saved => {
+        const imgBytes = Buffer.from(saved.img_cat, 'base64').toString('base64');
+        return {
+          id_saved: saved.id_saved,
+          id_user: saved.id_user,
+          id_cat: saved.id_cat,
+          name_cat: saved.name_cat,
+          img_cat: imgBytes
+        };
+      });
+
+      res.status(200).json(savedConDetalle);
+    });
+});
+
+
 //--------------------------------------FRIENDS-------------------------------------------------------------------------------------------------------
 
 
