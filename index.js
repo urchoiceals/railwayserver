@@ -152,10 +152,22 @@ app.get("/elements/:categoryId", (req, res) => {
 
 
 //--------------------------------------CATEGORIES-------------------------------------------------------------------------------------------------------
-  
-  
-app.get("/categories", (req, res) => {
-    connection.query('SELECT id_cat, name_cat, img_cat FROM categories', (error, results) => {
+
+
+
+app.get("/categories/:id_user", (req, res) => {
+    const userId = req.params.id_user;
+
+    // Consulta SQL para obtener las categorías que no están guardadas ni marcadas como favoritas por el usuario
+    const query = `
+        SELECT c.id_cat, c.name_cat, c.img_cat 
+        FROM categories c
+        LEFT JOIN saved s ON c.id_cat = s.id_cat AND s.id_user = ?
+        LEFT JOIN favs f ON c.id_cat = f.id_cat AND f.id_user = ?
+        WHERE s.id_cat IS NULL AND f.id_cat IS NULL
+    `;
+
+    connection.query(query, [userId, userId], (error, results) => {
         if (error) {
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
@@ -174,6 +186,7 @@ app.get("/categories", (req, res) => {
         res.status(200).json(categoriesWithBase64);
     });
 });
+
 
 
 app.post("/categories/create", (req, res) => {
@@ -326,7 +339,7 @@ app.post('/saved/insert', (req, res) => {
         return;
       }
       console.log('Guardado insertado correctamente:', result);
-      res.status(200).send('Favorito insertado correctamente');
+      res.status(200).send('Guardado insertado correctamente');
     });
   });
 
