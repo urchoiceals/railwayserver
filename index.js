@@ -250,6 +250,10 @@ app.post('/fav/insert', (req, res) => {
     });
   });
 
+
+
+  
+
   app.delete('/fav/delete/:id_user/:id_cat', (req, res) => {
     const id_user = req.params.id_user;
     const id_cat = req.params.id_cat;
@@ -325,6 +329,39 @@ app.post('/saved/insert', (req, res) => {
       res.status(200).send('Favorito insertado correctamente');
     });
   });
+
+
+  app.delete('/saved/fav/delete/:id_user/:id_cat', (req, res) => {
+    const id_user = req.params.id_user;
+    const id_cat = req.params.id_cat;
+
+    const deleteQuery = 'DELETE FROM saved WHERE id_user = ? AND id_cat = ?';
+    const deleteValues = [id_user, id_cat];
+
+    connection.query(deleteQuery, deleteValues, (deleteErr, deleteResult) => {
+        if (deleteErr) {
+            console.error('Error al eliminar:', deleteErr);
+            res.status(500).send('Error al eliminar de la base de datos');
+            return;
+        }
+        console.log('Saved eliminado correctamente:', deleteResult);
+
+        // Después de que se complete la eliminación, procedemos con la inserción
+        const insertQuery = 'INSERT INTO favs (id_user, id_cat) VALUES (?, ?)';
+        const insertValues = [id_user, id_cat];
+
+        connection.query(insertQuery, insertValues, (insertErr, insertResult) => {
+            if (insertErr) {
+                console.error('Error al insertar:', insertErr);
+                res.status(500).send('Error al insertar en la base de datos');
+                return;
+            }
+            console.log('Favorito insertado correctamente:', insertResult);
+            res.status(200).send('Favorito insertado correctamente');
+        });
+    });
+});
+
 
   app.delete('/saved/delete/:id_user/:id_cat', (req, res) => {
     const id_user = req.params.id_user;
