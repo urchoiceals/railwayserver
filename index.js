@@ -284,7 +284,7 @@ app.post("/categories/create", (req, res) => {
 
 
 
-app.get("/categories/:id", (req, res) => {
+app.get("/category/:id", (req, res) => {
     const categoryId = req.params.id;
     const query = `
         SELECT * 
@@ -838,10 +838,6 @@ app.post("/room/end", (req, res) => {
         });
     });
 });
-
-
-
-
 
 
 
