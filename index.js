@@ -113,25 +113,37 @@ app.get("/users/:id_user", (req, res) => {
 
 app.get("/elements/ranking/:categoryId", (req, res) => {
     const categoryId = req.params.categoryId;
-const query = `
-    SELECT elements.*, elemcat.victories 
-    FROM elemcat
-    INNER JOIN elements ON elemcat.id_elem = elements.id_elem
-    INNER JOIN categories ON elemcat.id_cat = categories.id_cat
-    WHERE categories.id_cat = ?
-    ORDER BY elemcat.victories DESC
-    LIMIT 5
-`;
+    const query = `
+        SELECT elements.* 
+        FROM elements
+        INNER JOIN categories ON elements.id_cat = categories.id_cat
+        WHERE categories.id_cat = ?
+        ORDER BY elements.victories DESC
+        LIMIT 5
+    `;
 
-    
     connection.query(query, [categoryId], (error, results) => {
         if (error) {
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
         
-        res.status(200).json(results);
+        // Convertir las imágenes de los elementos a Base64
+        const elementsWithBase64 = results.map(element => {
+            const imgBytes = element.img_elem;
+            const imgBase64 = Buffer.from(imgBytes).toString('base64');
+            return {
+                id_elem: element.id_elem,
+                name_elem: element.name_elem,
+                victories: element.victories,
+                id_cat: element.id_cat,
+                img_elem: imgBase64
+            };
+        });
+
+        res.status(200).json(elementsWithBase64);
     });
 });
+
 
 app.get("/elements/:categoryId", (req, res) => {
     const categoryId = req.params.categoryId;
