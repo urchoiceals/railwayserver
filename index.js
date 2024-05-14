@@ -179,7 +179,10 @@ app.get("/elements/:categoryId", (req, res) => {
 app.post("/element/winner", (req, res) => {
     const { id_elem, victories } = req.body;
     
-    connection.query('UPDATE elements SET victories = ? WHERE id_elem = ?', [victories + 1, id_elem], (error, results) => {
+    // Convertir la cadena de victorias a un número antes de sumar 1
+    const updatedVictories = parseInt(victories) + 1;
+
+    connection.query('UPDATE elements SET victories = ? WHERE id_elem = ?', [updatedVictories, id_elem], (error, results) => {
         if (error) {
             console.error('Error al actualizar la tabla elements:', error);
             return res.status(500).json({ error: 'Error interno del servidor' });
@@ -187,6 +190,7 @@ app.post("/element/winner", (req, res) => {
         res.status(200).json({ message: 'Se ha actualizado la tabla elements correctamente' });
     });
 });
+
 
 
 //--------------------------------------CATEGORIES-------------------------------------------------------------------------------------------------------
