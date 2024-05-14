@@ -176,6 +176,19 @@ app.get("/elements/:categoryId", (req, res) => {
 });
 
 
+app.post("/element/winner", (req, res) => {
+    const { id_elem, victories } = req.body;
+    
+    connection.query('UPDATE elements SET victories = ? WHERE id_elem = ?', [victories + 1, id_elem], (error, results) => {
+        if (error) {
+            console.error('Error al actualizar la tabla elements:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        res.status(200).json({ message: 'Se ha actualizado la tabla elements correctamente' });
+    });
+});
+
+
 //--------------------------------------CATEGORIES-------------------------------------------------------------------------------------------------------
 
 
@@ -268,6 +281,44 @@ app.post("/categories/create", (req, res) => {
         });
     });
 });
+
+
+
+app.get("/categories/:id", (req, res) => {
+    const categoryId = req.params.id;
+    const query = `
+        SELECT * 
+        FROM categories
+        WHERE id_cat = ?
+    `;
+
+    connection.query(query, [categoryId], (error, results) => {
+        if (error) {
+            console.error('Error al obtener la categoría:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'Categoría no encontrada' });
+        }
+
+        const category = results[0];
+
+        // Convertir la imagen de la categoría a Base64
+        const imgBytes = category.img_cat;
+        const imgBase64 = Buffer.from(imgBytes).toString('base64');
+        
+        // Crear un objeto con la categoría y la imagen en Base64
+        const categoryWithBase64 = {
+            id_cat: category.id_cat,
+            name_cat: category.name_cat,
+            img_cat: imgBase64
+        };
+
+        res.status(200).json(categoryWithBase64);
+    });
+});
+
 
 //--------------------------------------FAVORITOS-------------------------------------------------------------------------------------------------------
 
@@ -544,21 +595,6 @@ app.get("/categories", (req, res) => {
         });
 
         res.status(200).json(categoriesWithBase64);
-    });
-});
-
-
-//--------------------------------------ROOMGAME-------------------------------------------------------------------------------------------------------
-
-app.post("/elemcat/winner", (req, res) => {
-    const { id_elem, id_cat, victories } = req.body;
-    
-    connection.query('UPDATE elemcat SET victories = ? WHERE id_elem = ? AND id_cat = ?', [victories + 1, id_elem, id_cat], (error, results) => {
-        if (error) {
-            console.error('Error al actualizar la tabla elemcat:', error);
-            return res.status(500).json({ error: 'Error interno del servidor' });
-        }
-        res.status(200).json({ message: 'Se ha actualizado la tabla elemcat correctamente' });
     });
 });
 
