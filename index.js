@@ -700,6 +700,39 @@ app.get("/room/:id_room/users", (req, res) => {
     });
 });
 
+app.post("/room/updateVote", (req, res) => {
+    const { id_room, id_user, vote_game } = req.body; 
+
+    connection.query('UPDATE roomgame SET vote_game = ? WHERE id_room = ? AND id_user = ?', [vote_game, id_room, id_user], (error, results) => {
+        if (error) {
+            console.error('Error al actualizar el voto en roomgame:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        
+        // La actualización se realizó con éxito
+        console.log('Voto actualizado correctamente en la tabla roomgame');
+
+    });
+});
+
+
+app.get("/room/WinnerRound", (req, res) => {
+    const { id_room } = req.query;
+
+    connection.query('SELECT vote_game, COUNT(*) AS vote_count FROM roomgame WHERE id_room = ? AND vote_game IS NOT NULL AND vote_game <> "" GROUP BY vote_game ORDER BY vote_count DESC LIMIT 1', [id_room], (error, results) => {
+        if (error) {
+            console.error('Error al obtener el juego más votado:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'No se encontraron votos para esta sala' });
+        }
+
+        const mostVotedGame = results[0].vote_game;
+        res.status(200).json({ mostVotedGame });
+    });
+});
 
 
 
@@ -759,7 +792,7 @@ app.post("/room/start", (req, res) => {
 });
 
 
-app.post("/roomgame/vote", (req, res) => {
+/*app.post("/roomgame/vote", (req, res) => {
     const { id_room, id_user, vote_game } = req.body;
 
     // Función para verificar si todos los usuarios han votado
@@ -813,7 +846,24 @@ app.post("/roomgame/vote", (req, res) => {
         // Verificar si todos los usuarios han votado
         checkAllVotes();
     });
+});*/
+
+app.post("/room/updateVote", (req, res) => {
+    const { id_room, id_user, vote_game } = req.body; 
+
+    connection.query('UPDATE roomgame SET vote_game = ? WHERE id_room = ? AND id_user = ?', [vote_game, id_room, id_user], (error, results) => {
+        if (error) {
+            console.error('Error al actualizar el voto en roomgame:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        
+        // La actualización se realizó con éxito
+        console.log('Voto actualizado correctamente en la tabla roomgame');
+
+    });
 });
+
+
 
 
 
