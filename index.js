@@ -153,8 +153,6 @@ app.get("/elements/ranking/:categoryId", (req, res) => {
         if (error) {
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
-        
-        // Convertir las imágenes de los elementos a Base64
         const elementsWithBase64 = results.map(element => {
             const imgBytes = element.img_elem;
             const imgBase64 = Buffer.from(imgBytes).toString('base64');
@@ -175,12 +173,12 @@ app.get("/elements/ranking/:categoryId", (req, res) => {
 app.get("/elements/:categoryId", (req, res) => {
     const categoryId = req.params.categoryId;
     const query = `
-    SELECT *
-    FROM elements
-    WHERE id_cat = ?
-`;
+        SELECT *
+        FROM elements
+        WHERE id_cat = ?
+        ORDER BY name_elem DESC
+    `;
 
-    
     connection.query(query, [categoryId], (error, results) => {
         if (error) {
             return res.status(500).json({ error: 'Error interno del servidor' });
@@ -226,8 +224,6 @@ app.post("/element/winner", (req, res) => {
 
 app.get("/categories/:id_user", (req, res) => {
     const userId = req.params.id_user;
-
-    // Consulta SQL para obtener las categorías que no están guardadas ni marcadas como favoritas por el usuario
     const query = `
         SELECT c.id_cat, c.name_cat, c.img_cat 
         FROM categories c
@@ -792,62 +788,6 @@ app.post("/room/start", (req, res) => {
     });
 });
 
-
-/*app.post("/roomgame/vote", (req, res) => {
-    const { id_room, id_user, vote_game } = req.body;
-
-    // Función para verificar si todos los usuarios han votado
-    function checkAllVotes() {
-        connection.query('SELECT COUNT(*) AS pendingVotes FROM roomgame WHERE id_room = ? AND vote_game = ""', [id_room], (error, results) => {
-            if (error) {
-                console.error('Error al comprobar si todos los usuarios han votado:', error);
-                return res.status(500).json({ error: 'Error interno del servidor' });
-            }
-
-            const pendingVotes = results[0].pendingVotes;
-
-            if (pendingVotes === 0) {
-                // Todos los usuarios han votado, procedemos con la recolección y agrupación de votos
-                connection.query('SELECT vote_game, COUNT(*) AS vote_count FROM roomgame WHERE id_room = ? GROUP BY vote_game ORDER BY vote_count DESC', [id_room], (error, voteResults) => {
-                    if (error) {
-                        console.error('Error al recolectar los votos:', error);
-                        return res.status(500).json({ error: 'Error interno del servidor' });
-                    }
-                
-                    connection.query('UPDATE roomgame SET vote_game = "" WHERE id_room = ? AND id_user = ?', [id_room, id_user], (error, updateResults) => {
-                        if (error) {
-                            console.error('Error al actualizar el estado de votación de los usuarios de la sala:', error);
-                            return res.status(500).json({ error: 'Error interno del servidor' });
-                        }
-                        
-                        console.log('Estado de votación del usuario de la sala actualizado correctamente');
-                        
-                        // Ahora, envía la respuesta JSON con los recuentos de votos y el mensaje de confirmación
-                        res.status(200).json(voteResults);
-
-                    });
-                });
-                
-                
-            } else {
-                // Algunos usuarios aún no han votado, esperamos un momento y luego volvemos a verificar
-                console.log('Esperando a que todos los usuarios voten...');
-                setTimeout(checkAllVotes, 1000); // Esperar 1 segundo antes de volver a verificar
-            }
-        });
-    }
-
-    // Actualizar el voto del usuario en la tabla roomgame
-    connection.query('UPDATE roomgame SET vote_game = ? WHERE id_room = ? AND id_user = ?', [vote_game, id_room, id_user], (error, results) => {
-        if (error) {
-            console.error('Error al actualizar el voto en roomgame:', error);
-            return res.status(500).json({ error: 'Error interno del servidor' });
-        }
-
-        // Verificar si todos los usuarios han votado
-        checkAllVotes();
-    });
-});*/
 
 app.post("/room/updateVote", (req, res) => {
     const { id_room, id_user, vote_game } = req.body; 
