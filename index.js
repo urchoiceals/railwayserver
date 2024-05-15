@@ -717,8 +717,8 @@ app.post("/room/updateVote", (req, res) => {
 
 
 
-app.get("/room/WinnerRound", (req, res) => {
-    const { id_room } = req.query;
+app.get("/room/WinnerRound/:id_room", (req, res) => {
+    const id_room = req.params.id_room;
 
     connection.query('SELECT vote_game, COUNT(*) AS vote_count FROM roomgame WHERE id_room = ? AND vote_game IS NOT NULL AND vote_game <> "" GROUP BY vote_game ORDER BY vote_count DESC LIMIT 1', [id_room], (error, results) => {
         if (error) {
