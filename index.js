@@ -107,31 +107,71 @@ app.get("/users/:id_user", (req, res) => {
 });
 
 
-app.post("/updateUser", (req, res) => {
-    const { nick_user, img_user } = req.body;
+// Actualizar el nombre de un usuario por su ID
+app.post("/user/UpdateName", (req, res) => {
+    const { user_id, nick_user } = req.body;
 
-    // Convertir la imagen de base64 a bytes
-    const imgBytes = Buffer.from(img_user, 'base64');
-
-    // Realizar la consulta UPDATE
     connection.query(
-        'UPDATE users SET img_user = ? WHERE nick_user = ?',
-        [imgBytes, nick_user],
+        'SELECT COUNT(*) AS count FROM users WHERE nick_user = ? AND user_id != ?',
+        [nick_user, user_id],
         (error, results) => {
             if (error) {
-                console.error('Error al actualizar el usuario:', error);
+                console.error('Error al buscar usuarios con el mismo nombre:', error);
                 return res.status(500).json({ error: 'Error interno del servidor' });
             }
 
-            // Comprobar si se realizó la actualización correctamente
-            if (results.affectedRows > 0) {
-                res.status(200).json({ message: 'Usuario actualizado correctamente' });
-            } else {
-                res.status(404).json({ error: 'Usuario no encontrado' });
+            const userCount = results[0].count;
+
+            if (userCount > 0) {
+                return res.status(400).json({ error: 'Ya existe otro usuario con ese nombre' });
             }
+
+            // Si no hay otros usuarios con el mismo nombre, procedemos con la actualización
+            connection.query(
+                'UPDATE users SET nick_user = ? WHERE user_id = ?',
+                [new_nick_user, user_id],
+                (error, results) => {
+                    if (error) {
+                        console.error('Error al actualizar el nombre del usuario:', error);
+                        return res.status(500).json({ error: 'Error interno del servidor' });
+                    }
+
+                    if (results.affectedRows === 0) {
+                        return res.status(404).json({ error: 'Usuario no encontrado' });
+                    }
+
+                    res.status(200).json({ message: 'Nombre de usuario actualizado correctamente' });
+                }
+            );
         }
     );
 });
+
+
+// Actualizar el nombre de un usuario por su ID
+app.post("/user/UpdateIMG", (req, res) => {
+    const { user_id, img_user } = req.body;
+    
+    const imgBytes = Buffer.from(img_user, 'base64');
+
+    connection.query(
+        'UPDATE users SET img_user = ? WHERE user_id = ?',
+        [imgBytes, user_id],
+        (error, results) => {
+            if (error) {
+                console.error('Error al actualizar el nombre del usuario:', error);
+                return res.status(500).json({ error: 'Error interno del servidor' });
+            }
+
+            if (results.affectedRows === 0) {
+                return res.status(404).json({ error: 'Usuario no encontrado' });
+            }
+
+            res.status(200).json({ message: 'Nombre de usuario actualizado correctamente' });
+        }
+    );
+});
+
 
 
 //--------------------------------------ELEMENTS-------------------------------------------------------------------------------------------------------
