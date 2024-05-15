@@ -706,14 +706,15 @@ app.post("/room/updateVote", (req, res) => {
     connection.query('UPDATE roomgame SET vote_game = ? WHERE id_room = ? AND id_user = ?', [vote_game, id_room, id_user], (error, results) => {
         if (error) {
             console.error('Error al actualizar el voto en roomgame:', error);
-            return res.status(500).json({ error: 'Error interno del servidor' });
+            return res.status(500).json({ success: false, error: 'Error interno del servidor' });
         }
         
         // La actualización se realizó con éxito
         console.log('Voto actualizado correctamente en la tabla roomgame');
-
+        res.status(200).json({ success: true, message: 'Voto actualizado correctamente' });
     });
 });
+
 
 
 app.get("/room/WinnerRound", (req, res) => {
