@@ -39,7 +39,7 @@ app.post("/welcome", (req,res) =>{
 app.post("/user/register", (req, res) => {
     const { email, nick, img, contra } = req.body;
 
-    connection.query('SELECT * FROM users WHERE email_user = ?', [email], (error, results) => {
+    connection.query('SELECT * FROM users WHERE email_user = ? OR nick_user = ?', [email,nick], (error, results) => {
         if (error) {
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
@@ -242,7 +242,7 @@ app.get("/elements/:categoryId", (req, res) => {
 
 
 app.post("/element/winner", (req, res) => {
-    const { id_elem, victories } = req.body;
+    const { id_elem, victories, id_user } = req.body;
     
     // Convertir la cadena de victorias a un número antes de sumar 1
     const updatedVictories = parseInt(victories) + 1;
@@ -253,6 +253,13 @@ app.post("/element/winner", (req, res) => {
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
         res.status(200).json({ message: 'Se ha actualizado la tabla elements correctamente' });
+    });
+
+    connection.query('UPDATE users SET GamesPlayed = GamesPlayed + 1 WHERE id_user = ?', [id_user], (error, results) => {
+        if (error) {
+            console.error('Error al actualizar la tabla users:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
     });
 });
 
@@ -612,6 +619,21 @@ app.put("/friends/update", (req, res) => {
         res.status(400).json({ error: 'El nuevo estado proporcionado no es válido' });
     }
 });
+
+
+app.get("/friends/:id_user", (req, res) => {
+    const { id_user } = req.params;
+    
+    connection.query('SELECT COUNT(*) AS count FROM friends WHERE (id_us1 = ? OR id_us2 = ?) AND estado = "Aceptada"', [id_user, id_user], (error, results) => {
+        if (error) {
+            console.error('Error al realizar la consulta:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        const count = results[0].count;
+        res.status(200).json({ count });
+    });
+});
+
 
 
 //--------------------------------------ROOM-------------------------------------------------------------------------------------------------------
