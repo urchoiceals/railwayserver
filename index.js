@@ -107,6 +107,33 @@ app.get("/users/:id_user", (req, res) => {
 });
 
 
+app.post("/updateUser", (req, res) => {
+    const { nick_user, img_user } = req.body;
+
+    // Convertir la imagen de base64 a bytes
+    const imgBytes = Buffer.from(img_user, 'base64');
+
+    // Realizar la consulta UPDATE
+    connection.query(
+        'UPDATE users SET img_user = ? WHERE nick_user = ?',
+        [imgBytes, nick_user],
+        (error, results) => {
+            if (error) {
+                console.error('Error al actualizar el usuario:', error);
+                return res.status(500).json({ error: 'Error interno del servidor' });
+            }
+
+            // Comprobar si se realizó la actualización correctamente
+            if (results.affectedRows > 0) {
+                res.status(200).json({ message: 'Usuario actualizado correctamente' });
+            } else {
+                res.status(404).json({ error: 'Usuario no encontrado' });
+            }
+        }
+    );
+});
+
+
 //--------------------------------------ELEMENTS-------------------------------------------------------------------------------------------------------
 
 
@@ -747,20 +774,27 @@ app.post("/roomgame/vote", (req, res) => {
 
             if (pendingVotes === 0) {
                 // Todos los usuarios han votado, procedemos con la recolección y agrupación de votos
-                connection.query('SELECT vote_game, COUNT(*) AS vote_count FROM roomgame WHERE id_room = ? GROUP BY vote_game', [id_room], (error, results) => {
+                connection.query('SELECT vote_game, COUNT(*) AS vote_count FROM roomgame WHERE id_room = ? GROUP BY vote_game ORDER BY vote_count DESC', [id_room], (error, voteResults) => {
                     if (error) {
                         console.error('Error al recolectar los votos:', error);
                         return res.status(500).json({ error: 'Error interno del servidor' });
                     }
-                    connection.query('UPDATE roomgame SET vote_game = "" WHERE id_room = ? AND id_user = ?', [id_room, id_user], (error, results) => {
+                
+                    connection.query('UPDATE roomgame SET vote_game = "" WHERE id_room = ? AND id_user = ?', [id_room, id_user], (error, updateResults) => {
                         if (error) {
                             console.error('Error al actualizar el estado de votación de los usuarios de la sala:', error);
                             return res.status(500).json({ error: 'Error interno del servidor' });
                         }
+                        
                         console.log('Estado de votación del usuario de la sala actualizado correctamente');
-                        res.status(200).json({ message: 'Todos los usuarios han votado', vote_counts: results });
+                        
+                        // Ahora, envía la respuesta JSON con los recuentos de votos y el mensaje de confirmación
+                        res.status(200).json(voteResults);
+
                     });
                 });
+                
+                
             } else {
                 // Algunos usuarios aún no han votado, esperamos un momento y luego volvemos a verificar
                 console.log('Esperando a que todos los usuarios voten...');
