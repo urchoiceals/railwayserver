@@ -621,7 +621,9 @@ app.put("/friends/update", (req, res) => {
 });
 
 
-app.get("/friends/:id_user", (req, res) => {
+
+
+app.get("/friends/count/:id_user", (req, res) => {
     const { id_user } = req.params;
     
     connection.query('SELECT COUNT(*) AS count FROM friends WHERE (id_us1 = ? OR id_us2 = ?) AND estado = "Aceptada"', [id_user, id_user], (error, results) => {
@@ -633,6 +635,49 @@ app.get("/friends/:id_user", (req, res) => {
         res.status(200).json({ count });
     });
 });
+
+
+app.get("/friends/:id_user", (req, res) => {
+    const { id_user } = req.params;
+    
+    connection.query('SELECT * FROM friends WHERE (id_us1 = ? OR id_us2 = ?) AND estado = "Aceptada"', [id_user, id_user], (error, results) => {
+        if (error) {
+            console.error('Error al realizar la consulta:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        
+        const friends = results;
+        
+        // Obtener información de usuario asociada a los amigos encontrados
+        const userIds = friends.map(friend => friend.id_us1 === id_user ? friend.id_us2 : friend.id_us1);
+        
+        if (userIds.length === 0) {
+            // No se encontraron usuarios asociados a los amigos
+            return res.status(200).json([]);
+        }
+        
+        connection.query('SELECT * FROM users WHERE id_user IN (?)', [userIds], (error, userResults) => {
+            if (error) {
+                console.error('Error al obtener información de usuario:', error);
+                return res.status(500).json({ error: 'Error interno del servidor' });
+            }
+            
+            const users = userResults.map(user => ({
+                id_user: user.id_user,
+                email_user: user.email_user,
+                nick_user: user.nick_user,
+                pass_user: user.pass_user,
+                img_user: user.img_user,
+                GamesPlayed: user.GamesPlayed
+            }));
+            
+            res.status(200).json(users);
+        });
+    });
+});
+
+
+
 
 
 
