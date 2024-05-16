@@ -680,7 +680,7 @@ app.get("/friends/:id_user", (req, res) => {
 app.get("/friends/request/:id_user", (req, res) => {
     const { id_user } = req.params;
     
-    connection.query('SELECT * FROM friends WHERE id_us2 = ? AND estado = "pendiente"', [id_user], (error, results) => {
+    connection.query('SELECT * FROM friends WHERE (id_us1 = ? OR id_us2 = ?) AND estado = "pendiente"', [id_user, id_user], (error, results) => {
         if (error) {
             console.error('Error al realizar la consulta:', error);
             return res.status(500).json({ error: 'Error interno del servidor' });
