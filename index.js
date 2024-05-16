@@ -267,6 +267,27 @@ app.post("/element/winner", (req, res) => {
 
 //--------------------------------------CATEGORIES-------------------------------------------------------------------------------------------------------
 
+app.get("/categories/all", (req, res) => {
+    connection.query('SELECT * FROM categories', (error, results) => {
+        if (error) {
+            console.error('Error al realizar la consulta:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        const categoriesWithBase64 = results.map(category => {
+            const imgBytes = category.img_cat;
+            const imgBase64 = Buffer.from(imgBytes).toString('base64');
+            return {
+                id_cat: category.id_cat,
+                name_cat: category.name_cat,
+                img_cat: imgBase64
+            };
+        });
+
+        res.status(200).json(categoriesWithBase64);
+    });
+});
+
 
 
 app.get("/categories/:id_user", (req, res) => {
