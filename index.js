@@ -455,8 +455,6 @@ app.post('/fav/insert', (req, res) => {
     });
   });
 
-
-
   
 
   app.delete('/fav/delete/:id_user/:id_cat', (req, res) => {
@@ -681,55 +679,65 @@ app.get("/friends/count/:id_user", (req, res) => {
 
 app.get("/friends/:id_user", (req, res) => {
     const { id_user } = req.params;
-    
+
     connection.query('SELECT * FROM friends WHERE (id_us1 = ? OR id_us2 = ?) AND estado = "Aceptada"', [id_user, id_user], (error, results) => {
         if (error) {
             console.error('Error al realizar la consulta:', error);
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
-        
+
         const friends = results;
-        
+
         // Obtener información de usuario asociada a los amigos encontrados
         const userIds = friends.map(friend => friend.id_us1 === id_user ? friend.id_us2 : friend.id_us1);
-        
+
         if (userIds.length === 0) {
             // No se encontraron usuarios asociados a los amigos
             return res.status(200).json([]);
         }
-        
+
         connection.query('SELECT * FROM users WHERE id_user IN (?)', [userIds], (error, userResults) => {
             if (error) {
                 console.error('Error al obtener información de usuario:', error);
                 return res.status(500).json({ error: 'Error interno del servidor' });
             }
-            
-            const users = userResults.map(user => ({
-                id_user: user.id_user,
-                email_user: user.email_user,
-                nick_user: user.nick_user,
-                pass_user: user.pass_user,
-                img_user: user.img_user,
-                GamesPlayed: user.GamesPlayed
-            }));
-            
+
+            const users = userResults.map(user => {
+                // Tratar la imagen del usuario en base64
+                const imgBytes = user.img_user;
+                let imgBase64 = null; // Inicializa imgBase64 como null
+                if (imgBytes !== null) {
+                    imgBase64 = Buffer.from(imgBytes).toString('base64');
+                }
+                
+                return {
+                    id_user: user.id_user,
+                    email_user: user.email_user,
+                    nick_user: user.nick_user,
+                    pass_user: user.pass_user,
+                    img_user: imgBase64,
+                    GamesPlayed: user.GamesPlayed
+                };
+            });
+
             res.status(200).json(users);
         });
     });
 });
 
 
+
 app.get("/friends/request/:id_user", (req, res) => {
     const { id_user } = req.params;
-    
+
     connection.query('SELECT * FROM friends WHERE (id_us1 = ? OR id_us2 = ?) AND estado = "pendiente"', [id_user, id_user], (error, results) => {
         if (error) {
             console.error('Error al realizar la consulta:', error);
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
-        
+
         const friends = results;
-        
+
         // Obtener información de usuario asociada a los amigos encontrados
         const userIds = [];
         friends.forEach(friend => {
@@ -739,44 +747,47 @@ app.get("/friends/request/:id_user", (req, res) => {
                 userIds.push(friend.id_us1);
             }
         });
-        
+
         if (userIds.length === 0) {
             // No se encontraron usuarios asociados a los amigos
             return res.status(200).json([]);
         }
-        
+
         const userIdsExceptCurrentUser = userIds.filter(userId => userId !== parseInt(id_user));
-        
+
         if (userIdsExceptCurrentUser.length === 0) {
             // No hay otros usuarios que enviaran solicitudes de amistad
             return res.status(200).json([]);
         }
-        
+
         connection.query('SELECT * FROM users WHERE id_user IN (?)', [userIdsExceptCurrentUser], (error, userResults) => {
             if (error) {
                 console.error('Error al obtener información de usuario:', error);
                 return res.status(500).json({ error: 'Error interno del servidor' });
             }
-            
-            const users = userResults.map(user => ({
-                id_user: user.id_user,
-                email_user: user.email_user,
-                nick_user: user.nick_user,
-                pass_user: user.pass_user,
-                img_user: user.img_user,
-                GamesPlayed: user.GamesPlayed
-            }));
-            
+
+            const users = userResults.map(user => {
+                // Tratar la imagen del usuario en base64
+                const imgBytes = user.img_user;
+                let imgBase64 = null; // Inicializa imgBase64 como null
+                if (imgBytes !== null) {
+                    imgBase64 = Buffer.from(imgBytes).toString('base64');
+                }
+
+                return {
+                    id_user: user.id_user,
+                    email_user: user.email_user,
+                    nick_user: user.nick_user,
+                    pass_user: user.pass_user,
+                    img_user: imgBase64,
+                    GamesPlayed: user.GamesPlayed
+                };
+            });
+
             res.status(200).json(users);
         });
     });
 });
-
-
-
-
-
-
 
 
 //--------------------------------------ROOM-------------------------------------------------------------------------------------------------------
