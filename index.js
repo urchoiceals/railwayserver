@@ -67,7 +67,7 @@ app.post("/user/register", (req, res) => {
 
 
 
-  app.post("/user/login", (req, res) => {
+app.post("/user/login", (req, res) => {
     const { email, contra } = req.body;
 
     connection.query('SELECT * FROM users WHERE email_user = ? AND pass_user = ?', [email, contra], (error, results) => {
@@ -79,9 +79,27 @@ app.post("/user/register", (req, res) => {
         return res.status(401).json({ error: "Credenciales incorrectas" });
       }
       const user = results[0];
-      res.status(200).json(user);
+      
+      // Tratar la imagen del usuario en base64
+      const imgBytes = user.img_user;
+      let imgBase64 = null; // Inicializa imgBase64 como null
+      if (imgBytes !== null) {
+          imgBase64 = Buffer.from(imgBytes).toString('base64');
+      }
+
+      const userWithBase64Image = {
+        id_user: user.id_user,
+        email_user: user.email_user,
+        nick_user: user.nick_user,
+        pass_user: user.pass_user,
+        img_user: imgBase64,
+        GamesPlayed: user.GamesPlayed
+      };
+      
+      res.status(200).json(userWithBase64Image);
     });
 });
+
 
 app.get("/users/all/:id_user", (req, res) => {
     const userId = req.params.id_user;
