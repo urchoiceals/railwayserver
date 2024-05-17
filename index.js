@@ -1005,7 +1005,7 @@ app.post("/room/updateVote", (req, res) => {
 app.get("/room/WinnerRound/:id_room", (req, res) => {
     const id_room = req.params.id_room;
 
-    connection.query('SELECT vote_game, COUNT(*) AS vote_count FROM roomgame WHERE id_room = ? AND vote_game IS NOT NULL AND vote_game <> "" GROUP BY vote_game ORDER BY vote_count DESC LIMIT 1', [id_room], (error, results) => {
+    connection.query('SELECT vote_game, COUNT(*) AS vote_count FROM roomgame WHERE id_room = ? AND vote_game IS NOT NULL AND vote_game <> "" GROUP BY vote_game ORDER BY vote_count DESC, vote_game ASC LIMIT 1', [id_room], (error, results) => {
         if (error) {
             console.error('Error al obtener el juego más votado:', error);
             return res.status(500).json({ error: 'Error interno del servidor' });
@@ -1019,6 +1019,7 @@ app.get("/room/WinnerRound/:id_room", (req, res) => {
         res.status(200).json({ mostVotedGame });
     });
 });
+
 
 
 
