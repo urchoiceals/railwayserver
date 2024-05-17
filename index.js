@@ -114,7 +114,7 @@ app.post("/user/UpdateName", (req, res) => {
     const { user_id, nick_user } = req.body;
 
     connection.query(
-        'SELECT COUNT(*) AS count FROM users WHERE nick_user = ? AND user_id != ?',
+        'SELECT COUNT(*) AS count FROM users WHERE nick_user = ? AND id_user != ?',
         [nick_user, user_id],
         (error, results) => {
             if (error) {
@@ -130,8 +130,8 @@ app.post("/user/UpdateName", (req, res) => {
 
             // Si no hay otros usuarios con el mismo nombre, procedemos con la actualización
             connection.query(
-                'UPDATE users SET nick_user = ? WHERE user_id = ?',
-                [new_nick_user, user_id],
+                'UPDATE users SET nick_user = ? WHERE id_user = ?',
+                [nick_user, user_id],
                 (error, results) => {
                     if (error) {
                         console.error('Error al actualizar el nombre del usuario:', error);
