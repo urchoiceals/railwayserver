@@ -90,7 +90,21 @@ app.get("/users/all/:id_user", (req, res) => {
         if (error) {
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
-        res.status(200).json(results);
+
+        // Mapear los resultados para convertir img_user a Base64
+        const elementsWithBase64 = results.map(element => {
+            const imgBytes = element.img_user; // Suponiendo que la columna img_user contiene los bytes de la imagen
+            const imgBase64 = imgBytes ? Buffer.from(imgBytes).toString('base64') : null;
+            return {
+                id_user: element.id_user,
+                email_user: element.email_user,
+                nick_user: element.nick_user,
+                img_user: imgBase64,
+                GamesPlayed: element.GamesPlayed,
+            };
+        });
+
+        res.status(200).json(elementsWithBase64);
     });
 });
 
@@ -105,7 +119,20 @@ app.get("/users/:id_user", (req, res) => {
         if (results.length === 0) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
-        res.status(200).json(results[0]);
+
+        const element = results[0];
+        const imgBytes = element.img_user; // Suponiendo que la columna img_user contiene los bytes de la imagen
+        const imgBase64 = imgBytes ? Buffer.from(imgBytes).toString('base64') : null;
+        
+        const userWithBase64Image = {
+            id_user: element.id_user,
+            email_user: element.email_user,
+            nick_user: element.nick_user,
+            img_user: imgBase64,
+            GamesPlayed: element.GamesPlayed,
+        };
+
+        res.status(200).json(userWithBase64Image);
     });
 });
 
