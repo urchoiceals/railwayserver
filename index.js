@@ -104,9 +104,28 @@ app.get("/users/:id_user", (req, res) => {
         if (results.length === 0) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
-        res.status(200).json(results[0]);
+        
+        // Tratar las imágenes en base64
+        const userWithBase64 = results.map(user => {
+            const imgBytes = user.img_user;
+            let imgBase64 = null; // Inicializa imgBase64 como null
+            if (imgBytes !== null) {
+                imgBase64 = Buffer.from(imgBytes).toString('base64');
+            }
+            return {
+                id_user: user.id_user,
+                email_user: user.email_user,
+                nick_user: user.nick_user,
+                pass_user: user.pass_user,
+                img_user: imgBase64,
+                GamesPlayed: user.GamesPlayed
+            };
+        });
+        
+        res.status(200).json(userWithBase64[0]);
     });
 });
+
 
 
 // Actualizar el nombre de un usuario por su ID
