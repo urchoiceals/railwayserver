@@ -714,6 +714,7 @@ app.get("/friends/count/:id_user", (req, res) => {
 app.get("/friends/:id_user", (req, res) => {
     const { id_user } = req.params;
 
+    
     connection.query('SELECT * FROM friends WHERE (id_us1 = ? OR id_us2 = ?) AND estado = "Aceptada"', [id_user, id_user], (error, results) => {
         if (error) {
             console.error('Error al realizar la consulta:', error);
@@ -722,15 +723,30 @@ app.get("/friends/:id_user", (req, res) => {
 
         const friends = results;
 
-        // Obtener información de usuario asociada a los amigos encontrados
-        const userIds = friends.map(friend => friend.id_us1 === id_user ? friend.id_us2 : friend.id_us1);
+        const userIds = [];
+        friends.forEach(friend => {
+            if (friend.id_us1 === parseInt(id_user)) {
+                userIds.push(friend.id_us2);
+            } else {
+                userIds.push(friend.id_us1);
+            }
+        });
+
+        
 
         if (userIds.length === 0) {
             // No se encontraron usuarios asociados a los amigos
             return res.status(200).json([]);
         }
 
-        connection.query('SELECT * FROM users WHERE id_user IN (?)', [userIds], (error, userResults) => {
+        const userIdsExceptCurrentUser = userIds.filter(userId => userId !== parseInt(id_user));
+
+        if (userIdsExceptCurrentUser.length === 0) {
+            // No hay otros usuarios que enviaran solicitudes de amistad
+            return res.status(200).json([]);
+        }
+
+        connection.query('SELECT * FROM users WHERE id_user IN (?)', [userIdsExceptCurrentUser], (error, userResults) => {
             if (error) {
                 console.error('Error al obtener información de usuario:', error);
                 return res.status(500).json({ error: 'Error interno del servidor' });
