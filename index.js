@@ -673,15 +673,26 @@ app.post("/friends", (req, res) => {
 
         const id_us2 = results[0].id_user;
 
-        // Luego, insertar en la tabla friends utilizando id_us1 e id_us2
-        connection.query('INSERT INTO friends (id_us1, id_us2, estado) VALUES (?, ?, ?)', [id_us1, id_us2, 'pendiente'], (error, results) => {
+        // Comprobar si ya existe una fila con los mismos id_us1 e id_us2 en la tabla friends
+        connection.query('SELECT * FROM friends WHERE (id_us1 = ? AND id_us2 = ?) OR (id_us1 = ? AND id_us2 = ?)', [id_us1, id_us2, id_us2, id_us1], (error, results) => {
             if (error) {
                 return res.status(500).json({ error: 'Error interno del servidor' });
             }
-            res.status(201).json({ message: 'Inserción exitosa en la tabla friends' });
+            if (results.length > 0) {
+                return res.status(400).json({ error: 'Ya existe una amistad entre estos usuarios' });
+            }
+
+            // Si no existe una fila con los mismos id_us1 e id_us2, insertar en la tabla friends
+            connection.query('INSERT INTO friends (id_us1, id_us2, estado) VALUES (?, ?, ?)', [id_us1, id_us2, 'pendiente'], (error, results) => {
+                if (error) {
+                    return res.status(500).json({ error: 'Error interno del servidor' });
+                }
+                res.status(201).json({ message: 'Inserción exitosa en la tabla friends' });
+            });
         });
     });
 });
+
 
 
 app.put("/friends/update", (req, res) => {
