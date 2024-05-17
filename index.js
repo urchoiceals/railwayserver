@@ -157,7 +157,7 @@ app.post("/user/UpdateIMG", (req, res) => {
     const imgBytes = Buffer.from(img_user, 'base64');
 
     connection.query(
-        'UPDATE users SET img_user = ? WHERE user_id = ?',
+        'UPDATE users SET img_user = ? WHERE id_user = ?',
         [imgBytes, user_id],
         (error, results) => {
             if (error) {
