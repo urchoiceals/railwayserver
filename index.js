@@ -83,14 +83,17 @@ app.post("/user/register", (req, res) => {
     });
 });
 
-app.get("/users", (req, res) => {
-    connection.query('SELECT * FROM users', (error, results) => {
+app.get("/users/all/:id_user", (req, res) => {
+    const userId = req.params.id_user;
+
+    connection.query('SELECT * FROM users WHERE id_user != ?', [userId], (error, results) => {
         if (error) {
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
         res.status(200).json(results);
     });
 });
+
 
 app.get("/users/:id_user", (req, res) => {
     const userId = req.params.id_user;
