@@ -659,15 +659,27 @@ app.post('/saved/insert', (req, res) => {
 
 //--------------------------------------FRIENDS-------------------------------------------------------------------------------------------------------
 
-
 app.post("/friends", (req, res) => {
-    const { id_us1, id_us2 } = req.body;
+    const { id_us1, nick_name } = req.body;
 
-    connection.query('INSERT INTO friends (id_us1, id_us2, estado) VALUES (?, ?, ?)', [id_us1, id_us2, 'pendiente'], (error, results) => {
+    // Primero, buscar el id_user del usuario con el nick_name proporcionado
+    connection.query('SELECT id_user FROM users WHERE nick_user = ?', [nick_name], (error, results) => {
         if (error) {
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
-        res.status(201).json({ message: 'Inserción exitosa en la tabla friends' });
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        const id_us2 = results[0].id_user;
+
+        // Luego, insertar en la tabla friends utilizando id_us1 e id_us2
+        connection.query('INSERT INTO friends (id_us1, id_us2, estado) VALUES (?, ?, ?)', [id_us1, id_us2, 'pendiente'], (error, results) => {
+            if (error) {
+                return res.status(500).json({ error: 'Error interno del servidor' });
+            }
+            res.status(201).json({ message: 'Inserción exitosa en la tabla friends' });
+        });
     });
 });
 
