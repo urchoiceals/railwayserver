@@ -343,7 +343,18 @@ app.get("/categories/all", (req, res) => {
     });
 });
 
-
+app.get('/categories/mine/:user_id', (req, res) => {
+    const userId = req.params.user_id;
+  
+    const query = 'SELECT * FROM categories WHERE id_user = ?';
+    
+    db.query(query, [userId], (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.json(results);
+    });
+  });
 
 app.get("/categories/:id_user", (req, res) => {
     const userId = req.params.id_user;
@@ -378,7 +389,7 @@ app.get("/categories/:id_user", (req, res) => {
 
 
 app.post("/categories/create", (req, res) => {
-    const { name_cat, img_cat, elements } = req.body;
+    const { name_cat, img_cat, elements, id_user } = req.body;
 
     // Convertir la imagen Base64 a bytes
     const imgBytes = Buffer.from(img_cat, 'base64');
@@ -391,7 +402,7 @@ app.post("/categories/create", (req, res) => {
         }
 
         // Insertar la categoría
-        connection.query('INSERT INTO categories (name_cat, img_cat) VALUES (?, ?)', [name_cat, imgBytes], (error, categoryResult) => {
+        connection.query('INSERT INTO categories (name_cat, img_cat, id_user ) VALUES (?, ?, ?)', [name_cat, imgBytes, id_user], (error, categoryResult) => {
             if (error) {
                 connection.rollback(function() {
                     console.error('Error al insertar la nueva categoría:', error);
