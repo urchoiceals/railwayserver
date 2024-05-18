@@ -979,11 +979,13 @@ app.get("/room/:id_room/users", (req, res) => {
             console.error('Error al recuperar los usuarios y sus votos:', error);
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
-
-        // Si se encontraron resultados, enviarlos como respuesta
-        res.status(200).json(results);
+        setTimeout(() => {
+            res.status(200).json(results);
+        }, 5000);
     });
 });
+
+
 
 app.post("/room/updateVote", (req, res) => {
     const { id_room, id_user, vote_game } = req.body; 
