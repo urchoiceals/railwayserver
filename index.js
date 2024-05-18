@@ -348,11 +348,22 @@ app.get('/categories/mine/:user_id', (req, res) => {
   
     const query = 'SELECT * FROM categories WHERE id_user = ?';
     
-    db.query(query, [userId], (err, results) => {
+    connection.query(query, [userId], (err, results) => {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
-      res.json(results);
+
+
+      const categoriesWithBase64 = results.map(category => {
+        const imgBytes = category.img_cat;
+        const imgBase64 = Buffer.from(imgBytes).toString('base64');
+        return {
+            id_cat: category.id_cat,
+            name_cat: category.name_cat,
+            img_cat: imgBase64
+        };
+    });
+    res.status(200).json(categoriesWithBase64);
     });
   });
 
