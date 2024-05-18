@@ -397,6 +397,52 @@ app.get("/categories/:id_user", (req, res) => {
     });
 });
 
+app.delete("/categories/delete/:id_cat", (req, res) => {
+    const id_cat = req.params.id_cat;
+
+    connection.beginTransaction(function(err) {
+        if (err) {
+            console.error('Error al iniciar la transacción:', err);
+            return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción' });
+        }
+
+        // Eliminar los elementos asociados a la categoría
+        connection.query('DELETE FROM elements WHERE id_cat = ?', [id_cat], (error, deleteElementsResult) => {
+            if (error) {
+                connection.rollback(function() {
+                    console.error('Error al eliminar los elementos:', error);
+                    return res.status(500).json({ error: 'Error interno del servidor al eliminar elementos' });
+                });
+                return;
+            }
+
+            // Eliminar la categoría
+            connection.query('DELETE FROM categories WHERE id_cat = ?', [id_cat], (error, deleteCategoryResult) => {
+                if (error) {
+                    connection.rollback(function() {
+                        console.error('Error al eliminar la categoría:', error);
+                        return res.status(500).json({ error: 'Error interno del servidor al eliminar categoría' });
+                    });
+                    return;
+                }
+
+                // Commit de la transacción si todas las eliminaciones fueron exitosas
+                connection.commit(function(err) {
+                    if (err) {
+                        connection.rollback(function() {
+                            console.error('Error al hacer commit de la transacción:', err);
+                            return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
+                        });
+                        return;
+                    }
+
+                    console.log('Categoría y elementos asociados eliminados con éxito.');
+                    res.status(200).json({ message: 'Categoría y elementos asociados eliminados con éxito.' });
+                });
+            });
+        });
+    });
+});
 
 
 app.post("/categories/update", (req, res) => {
