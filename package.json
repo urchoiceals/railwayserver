@@ -4,14 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "prestart": "npm install",
     "start": "node ./index.js"
   },
   "keywords": [],
   "author": "TheRockex <115924688+TheRockex@users.noreply.github.com>",
   "license": "ISC",
   "dependencies": {
-    "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
     "body-parse": "^0.1.0",
     "express": "^4.19.2",
     "mysql": "^2.18.1",
