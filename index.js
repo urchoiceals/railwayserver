@@ -551,42 +551,62 @@ app.post("/categories/create", (req, res) => {
             return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción'});
         }
 
-        // Insertar la categoría
-        connection.query('INSERT INTO categories (name_cat, img_cat, id_user ) VALUES (?, ?, ?)', [name_cat, imgBytes, id_user], (error, categoryResult) => {
+        // Verificar si la categoría ya existe
+        connection.query('SELECT id_cat FROM categories WHERE name_cat = ?', [name_cat], (error, results) => {
             if (error) {
                 connection.rollback(function() {
-                    console.error('Error al insertar la nueva categoría:', error);
-                    return res.status(500).json({ error: 'Error interno del servidor al insertar categoría' });
+                    console.error('Error al verificar la existencia de la categoría:', error);
+                    return res.status(500).json({ error: 'Error interno del servidor al verificar la existencia de la categoría' });
                 });
                 return; // Detener la ejecución en caso de error
             }
 
-            const id_cat = categoryResult.insertId; // Obtener el ID de la categoría recién insertada
+            if (results.length > 0) {
+                // La categoría ya existe
+                connection.rollback(function() {
+                    console.error('Ya existe una categoría con ese nombre.');
+                    return res.status(400).json({ error: 'Ya existe una categoría con ese nombre' });
+                });
+                return; // Detener la ejecución
+            }
 
-            let query = 'INSERT INTO elements (img_elem, name_elem, id_cat) VALUES ?';        
-            let elementValues = elements.map(element => [Buffer.from(element.img_elem, 'base64'), element.name_elem, id_cat]);
-
-            connection.query(query, [elementValues], (error, elementResult) => {
+            // Insertar la nueva categoría si no existe
+            connection.query('INSERT INTO categories (name_cat, img_cat, id_user ) VALUES (?, ?, ?)', [name_cat, imgBytes, id_user], (error, categoryResult) => {
                 if (error) {
                     connection.rollback(function() {
-                        console.error('Error al insertar los elementos:', error);
-                        return res.status(500).json({ error: 'Error interno del servidor al insertar elementos' });
+                        console.error('Error al insertar la nueva categoría:', error);
+                        return res.status(500).json({ error: 'Error interno del servidor al insertar categoría' });
                     });
                     return; // Detener la ejecución en caso de error
                 }
 
-                // Commit de la transacción si todas las inserciones fueron exitosas
-                connection.commit(function(err) {
-                    if (err) {
+                const id_cat = categoryResult.insertId; // Obtener el ID de la categoría recién insertada
+
+                let query = 'INSERT INTO elements (img_elem, name_elem, id_cat) VALUES ?';        
+                let elementValues = elements.map(element => [Buffer.from(element.img_elem, 'base64'), element.name_elem, id_cat]);
+
+                connection.query(query, [elementValues], (error, elementResult) => {
+                    if (error) {
                         connection.rollback(function() {
-                            console.error('Error al hacer commit de la transacción:', err);
-                            return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
+                            console.error('Error al insertar los elementos:', error);
+                            return res.status(500).json({ error: 'Error interno del servidor al insertar elementos' });
                         });
                         return; // Detener la ejecución en caso de error
                     }
 
-                    console.log('Transacción completada con éxito.');
-                    res.status(200).json({ message: 'Transacción completada con éxito.' });
+                    // Commit de la transacción si todas las inserciones fueron exitosas
+                    connection.commit(function(err) {
+                        if (err) {
+                            connection.rollback(function() {
+                                console.error('Error al hacer commit de la transacción:', err);
+                                return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
+                            });
+                            return; // Detener la ejecución en caso de error
+                        }
+
+                        console.log('Transacción completada con éxito.');
+                        res.status(200).json({ message: 'Transacción completada con éxito.' });
+                    });
                 });
             });
         });
