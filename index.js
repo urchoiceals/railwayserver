@@ -14,6 +14,9 @@ const dbUrl = 'mysql://root:dCWwchdFnRuZMnZhWFyLRRQHGByISwtk@viaduct.proxy.rlwy.
 
 const connection = mysql.createConnection(dbUrl);
 
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+
 
 connection.connect((err) => {
   if (err) {
@@ -49,32 +52,39 @@ app.post("/user/register", (req, res) => {
         // Convertir la imagen a bytes
         const imgBytes = Buffer.from(img, 'base64');
 
-        connection.query('INSERT INTO users (email_user, nick_user, pass_user, img_user) VALUES (?, ?, ?, ?)', [email, nick, contra, imgBytes], (error, results) => {
-            if (error) {
-                return res.status(500).json({ error: 'Error interno del servidor1' + error });
+        // Hash la contraseña antes de almacenarla
+        bcrypt.hash(contra, saltRounds, (err, hash) => {
+            if (err) {
+                return res.status(500).json({ error: 'Error al hashear la contraseña' });
             }
 
-            connection.query('SELECT * FROM users WHERE id_user = ?', results.insertId, (error, results) => {
+            connection.query('INSERT INTO users (email_user, nick_user, pass_user, img_user) VALUES (?, ?, ?, ?)', [email, nick, hash, imgBytes], (error, results) => {
                 if (error) {
-                    return res.status(500).json({ error: 'Error interno del servidor2' });
+                    return res.status(500).json({ error: 'Error interno del servidor1' + error });
                 }
 
-                const insertedUser = results[0];
-                
-                // Tratar la imagen del usuario en base64
-                const imgBase64 = insertedUser.img_user.toString('base64');
+                connection.query('SELECT * FROM users WHERE id_user = ?', [results.insertId], (error, results) => {
+                    if (error) {
+                        return res.status(500).json({ error: 'Error interno del servidor2' });
+                    }
 
-                const userWithBase64Image = {
-                    id_user: insertedUser.id_user,
-                    email_user: insertedUser.email_user,
-                    nick_user: insertedUser.nick_user,
-                    pass_user: insertedUser.pass_user,
-                    img_user: imgBase64,
-                    GamesPlayed: insertedUser.GamesPlayed
-                };
+                    const insertedUser = results[0];
+                    
+                    // Tratar la imagen del usuario en base64
+                    const imgBase64 = insertedUser.img_user.toString('base64');
 
-                console.log('Usuario insertado correctamente en la base de datos');
-                res.status(201).json(userWithBase64Image);
+                    const userWithBase64Image = {
+                        id_user: insertedUser.id_user,
+                        email_user: insertedUser.email_user,
+                        nick_user: insertedUser.nick_user,
+                        pass_user: insertedUser.pass_user,
+                        img_user: imgBase64,
+                        GamesPlayed: insertedUser.GamesPlayed
+                    };
+
+                    console.log('Usuario insertado correctamente en la base de datos');
+                    res.status(201).json(userWithBase64Image);
+                });
             });
         });
     });
@@ -82,37 +92,47 @@ app.post("/user/register", (req, res) => {
 
 
 
-
 app.post("/user/login", (req, res) => {
     const { email, contra } = req.body;
 
-    connection.query('SELECT * FROM users WHERE email_user = ? AND pass_user = ?', [email, contra], (error, results) => {
-      if (error) {
-        console.error('Error al realizar la consulta:', error);
-        return res.status(500).json({ error: 'Error interno del servidor' });
-      }
-      if (results.length === 0) {
-        return res.status(401).json({ error: "Credenciales incorrectas" });
-      }
-      const user = results[0];
-      
-      // Tratar la imagen del usuario en base64
-      const imgBytes = user.img_user;
-      let imgBase64 = null; // Inicializa imgBase64 como null
-      if (imgBytes !== null) {
-          imgBase64 = Buffer.from(imgBytes).toString('base64');
-      }
+    connection.query('SELECT * FROM users WHERE email_user = ?', [email], (error, results) => {
+        if (error) {
+            console.error('Error al realizar la consulta:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        if (results.length === 0) {
+            return res.status(401).json({ error: "Credenciales incorrectas" });
+        }
 
-      const userWithBase64Image = {
-        id_user: user.id_user,
-        email_user: user.email_user,
-        nick_user: user.nick_user,
-        pass_user: user.pass_user,
-        img_user: imgBase64,
-        GamesPlayed: user.GamesPlayed
-      };
-      
-      res.status(200).json(userWithBase64Image);
+        const user = results[0];
+
+        // Comparar la contraseña ingresada con la hash almacenada
+        bcrypt.compare(contra, user.pass_user, (err, isMatch) => {
+            if (err) {
+                return res.status(500).json({ error: 'Error al comparar las contraseñas' });
+            }
+            if (!isMatch) {
+                return res.status(401).json({ error: 'Credenciales incorrectas' });
+            }
+
+            // Tratar la imagen del usuario en base64
+            const imgBytes = user.img_user;
+            let imgBase64 = null;
+            if (imgBytes !== null) {
+                imgBase64 = Buffer.from(imgBytes).toString('base64');
+            }
+
+            const userWithBase64Image = {
+                id_user: user.id_user,
+                email_user: user.email_user,
+                nick_user: user.nick_user,
+                pass_user: user.pass_user,
+                img_user: imgBase64,
+                GamesPlayed: user.GamesPlayed
+            };
+
+            res.status(200).json(userWithBase64Image);
+        });
     });
 });
 
