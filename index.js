@@ -43,36 +43,44 @@ app.post("/user/register", (req, res) => {
         // Convertir la imagen a bytes
         const imgBytes = Buffer.from(img, 'base64');
 
-        connection.query('INSERT INTO users (email_user, nick_user, pass_user, img_user) VALUES (?, ?, ?, ?)', [email, nick, contra, imgBytes], (error, results) => {
-            if (error) {
-                return res.status(500).json({ error: 'Error interno del servidor1' + error });
+        // Hashear la contraseña antes de almacenarla
+        bcrypt.hash(contra, 10, (err, hashedPassword) => {
+            if (err) {
+                return res.status(500).json({ error: 'Error al hashear la contraseña' });
             }
 
-            connection.query('SELECT * FROM users WHERE id_user = ?', results.insertId, (error, results) => {
+            connection.query('INSERT INTO users (email_user, nick_user, pass_user, img_user) VALUES (?, ?, ?, ?)', [email, nick, hashedPassword, imgBytes], (error, results) => {
                 if (error) {
-                    return res.status(500).json({ error: 'Error interno del servidor2' });
+                    return res.status(500).json({ error: 'Error interno del servidor1' + error });
                 }
 
-                const insertedUser = results[0];
-                
-                // Tratar la imagen del usuario en base64
-                const imgBase64 = insertedUser.img_user.toString('base64');
+                connection.query('SELECT * FROM users WHERE id_user = ?', results.insertId, (error, results) => {
+                    if (error) {
+                        return res.status(500).json({ error: 'Error interno del servidor2' });
+                    }
 
-                const userWithBase64Image = {
-                    id_user: insertedUser.id_user,
-                    email_user: insertedUser.email_user,
-                    nick_user: insertedUser.nick_user,
-                    pass_user: insertedUser.pass_user,
-                    img_user: imgBase64,
-                    GamesPlayed: insertedUser.GamesPlayed
-                };
+                    const insertedUser = results[0];
 
-                console.log('Usuario insertado correctamente en la base de datos');
-                res.status(201).json(userWithBase64Image);
+                    // Tratar la imagen del usuario en base64
+                    const imgBase64 = insertedUser.img_user.toString('base64');
+
+                    const userWithBase64Image = {
+                        id_user: insertedUser.id_user,
+                        email_user: insertedUser.email_user,
+                        nick_user: insertedUser.nick_user,
+                        pass_user: insertedUser.pass_user,
+                        img_user: imgBase64,
+                        GamesPlayed: insertedUser.GamesPlayed
+                    };
+
+                    console.log('Usuario insertado correctamente en la base de datos');
+                    res.status(201).json(userWithBase64Image);
+                });
             });
         });
     });
 });
+
 
 
 
