@@ -1320,6 +1320,89 @@ app.post("/room/end", (req, res) => {
 });
 
 
+app.post("/app/end", (req, res) => {
+    const { id_user } = req.body;
+
+    // Seleccionar todas las salas en las que el usuario está presente
+    connection.query('SELECT DISTINCT id_room FROM roomgame WHERE id_user = ?', [id_user], (error, rooms) => {
+        if (error) {
+            console.error('Error al obtener las salas del usuario:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        if (rooms.length === 0) {
+            return res.status(404).json({ error: 'El usuario no está en ninguna sala' });
+        }
+
+        // Usar un contador para manejar la respuesta después de procesar todas las salas
+        let processedRooms = 0;
+
+        rooms.forEach(room => {
+            const id_room = room.id_room;
+
+            // Eliminar el registro de la sala para el usuario específico
+            connection.query('DELETE FROM roomgame WHERE id_room = ? AND id_user = ?', [id_room, id_user], (error, results) => {
+                if (error) {
+                    console.error('Error al eliminar el juego de sala:', error);
+                    return res.status(500).json({ error: 'Error interno del servidor' });
+                }
+
+                // Verificar si todavía hay usuarios en la sala
+                connection.query('SELECT COUNT(*) AS userCount FROM roomgame WHERE id_room = ?', [id_room], (error, results) => {
+                    if (error) {
+                        console.error('Error al contar los usuarios de la sala:', error);
+                        return res.status(500).json({ error: 'Error interno del servidor' });
+                    }
+
+                    const userCount = results[0].userCount;
+
+                    if (userCount === 0) {
+                        // Si no quedan usuarios en la sala, eliminar la sala
+                        connection.query('DELETE FROM room WHERE id_room = ?', [id_room], (error, results) => {
+                            if (error) {
+                                console.error('Error al eliminar la sala:', error);
+                                return res.status(500).json({ error: 'Error interno del servidor' });
+                            }
+                            console.log(`Sala ${id_room} eliminada correctamente`);
+                        });
+                    } else {
+                        // Si aún quedan usuarios en la sala, verificar si hay alguno con admin = 1
+                        connection.query('SELECT COUNT(*) AS adminCount FROM roomgame WHERE id_room = ? AND admin = 1', [id_room], (error, results) => {
+                            if (error) {
+                                console.error('Error al contar los usuarios administradores de la sala:', error);
+                                return res.status(500).json({ error: 'Error interno del servidor' });
+                            }
+
+                            const adminCount = results[0].adminCount;
+
+                            if (adminCount === 0) {
+                                // Si no hay usuarios administradores en la sala, actualizar al primero como administrador
+                                connection.query('UPDATE roomgame SET admin = 1 WHERE id_room = ? ORDER BY id_roomgame LIMIT 1', [id_room], (error, results) => {
+                                    if (error) {
+                                        console.error('Error al actualizar el primer usuario como administrador:', error);
+                                        return res.status(500).json({ error: 'Error interno del servidor' });
+                                    }
+                                    console.log(`Primer usuario de la sala ${id_room} actualizado como administrador`);
+                                });
+                            } else {
+                                console.log(`La sala ${id_room} ya tiene un administrador`);
+                            }
+                        });
+                    }
+
+                    // Incrementar el contador de salas procesadas y verificar si hemos terminado
+                    processedRooms++;
+                    if (processedRooms === rooms.length) {
+                        res.status(200).json({ message: 'Operación completada en todas las salas del usuario' });
+                    }
+                });
+            });
+        });
+    });
+});
+
+
+
 
 //--------------------------------------FUNCIONA-------------------------------------------------------------------------------------------------------
 
