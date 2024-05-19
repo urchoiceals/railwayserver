@@ -714,19 +714,36 @@ app.post('/fav/insert', (req, res) => {
 app.post('/saved/insert', (req, res) => {
     const { id_user, id_cat } = req.body;
   
-    const query = 'INSERT INTO saved (id_user, id_cat) VALUES (?, ?)';
-    const values = [id_user, id_cat];
+    // Primero, inserta en la tabla saved
+    const insertQuery = 'INSERT INTO saved (id_user, id_cat) VALUES (?, ?)';
+    const insertValues = [id_user, id_cat];
   
-    connection.query(query, values, (err, result) => {
-      if (err) {
-        console.error('Error al insertar:', err);
+    connection.query(insertQuery, insertValues, (insertErr, insertResult) => {
+      if (insertErr) {
+        console.error('Error al insertar:', insertErr);
         res.status(500).send('Error al insertar en la base de datos');
         return;
       }
-      console.log('Guardado insertado correctamente:', result);
-      res.status(200).send('Guardado insertado correctamente');
+  
+      console.log('Guardado insertado correctamente:', insertResult);
+  
+      // Luego, elimina de la tabla favs
+      const deleteQuery = 'DELETE FROM favs WHERE id_user = ? AND id_cat = ?';
+      const deleteValues = [id_user, id_cat];
+  
+      connection.query(deleteQuery, deleteValues, (deleteErr, deleteResult) => {
+        if (deleteErr) {
+          console.error('Error al eliminar:', deleteErr);
+          res.status(500).send('Error al eliminar de la base de datos');
+          return;
+        }
+  
+        console.log('Favorito eliminado correctamente:', deleteResult);
+        res.status(200).send('Guardado insertado y favorito eliminado correctamente');
+      });
     });
   });
+  
 
 
   app.delete('/saved/fav/delete/:id_user/:id_cat', (req, res) => {
