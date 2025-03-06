@@ -27,7 +27,7 @@ app.use(bodyParse.urlencoded({ limit: '100mb', extended: true }));
 
 const mysql = require('mysql2');
 const connection = mysql.createConnection({
-    host: 'metro.proxy.rlwy.ne',  // Mismo host que usaste en Workbench
+    host: 'metro.proxy.rlwy.net',  // Mismo host que usaste en Workbench
     user: 'root',
     password: 'CrVjGaHUplkkvKXKMTrdwoyDbXhueVMT',
     database: 'railway',
