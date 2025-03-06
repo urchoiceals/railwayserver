@@ -53,6 +53,7 @@ app.get('/user', (req, res) => {
 //--------------------------------------USERS-------------------------------------------------------------------------------------------------------
 app.post("/user/register", (req, res) => {
     const { email, nick, img, contra } = req.body;
+    console.log("Datos recibidos:", { email, nick, img, contra });
 
     connection.query('SELECT * FROM users WHERE email_user = ? OR nick_user = ?', [email, nick], (error, results) => {
         if (error) {
@@ -68,7 +69,9 @@ app.post("/user/register", (req, res) => {
         // Hashear la contraseña antes de almacenarla
         bcrypt.hash(contra, 10, (err, hashedPassword) => {
             if (err) {
+                console.error('Error al hashear la contraseña:', err);
                 return res.status(500).json({ error: 'Error al hashear la contraseña' });
+
             }
 
             connection.query('INSERT INTO users (email_user, nick_user, pass_user, img_user) VALUES (?, ?, ?, ?)', [email, nick, hashedPassword, imgBytes], (error, results) => {
