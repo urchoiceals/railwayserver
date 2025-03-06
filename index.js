@@ -31,7 +31,7 @@ const connection = mysql.createConnection({
     user: 'root',
     password: 'CrVjGaHUplkkvKXKMTrdwoyDbXhueVMT',
     database: 'railway',
-    port: 24292,  // IMPORTANTE: Railway usa un puerto diferente (24292)
+    port: 53014,  // IMPORTANTE: Railway usa un puerto diferente (24292)
     connectTimeout: 60000 // Aumenta el tiempo de espera a 60s
 });
 
