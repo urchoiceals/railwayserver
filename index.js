@@ -77,11 +77,13 @@ app.post("/user/register", (req, res) => {
 
             connection.query('INSERT INTO users (email_user, nick_user, pass_user, img_user) VALUES (?, ?, ?, ?)', [email, nick, hashedPassword, imgBytes], (error, results) => {
                 if (error) {
+                    console.error('Error en el servidor 1:', error);
                     return res.status(500).json({ error: 'Error interno del servidor1' + error });
                 }
 
                 connection.query('SELECT * FROM users WHERE id_user = ?', results.insertId, (error, results) => {
                     if (error) {
+                        console.error('Error en el servidor 2:', error);
                         return res.status(500).json({ error: 'Error interno del servidor2' });
                     }
 
