@@ -24,16 +24,16 @@ app.use(bodyParse.urlencoded({ limit: '100mb', extended: true }));
 //   console.log('Conexión exitosa a la basde e datos MySQL');
 // });
 app.get("/", (req,res) =>{
-    res.status(200).send("Hola Gay");
+    res.status(200).send("Hola Gay Puta");
 });
 
 const mysql = require('mysql2');
 const connection = mysql.createConnection({
-    host: 'metro.proxy.rlwy.net',  // Mismo host que usaste en Workbench
+    host: 'switchback.proxy.rlwy.net',  // Mismo host que usaste en Workbench
     user: 'root',
-    password: 'CrVjGaHUplkkvKXKMTrdwoyDbXhueVMT',
+    password: 'QLhaeZpVRcMvgyLsoySDMPNpJKrzXhbC',
     database: 'railway',
-    port: 53014,  // IMPORTANTE: Railway usa un puerto diferente (24292)
+    port: 56179,  // IMPORTANTE: Railway usa un puerto diferente (24292)
     connectTimeout: 60000 // Aumenta el tiempo de espera a 60s
 });
 
