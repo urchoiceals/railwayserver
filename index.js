@@ -68,6 +68,7 @@ app.post("/user/register", (req, res) => {
 
         // Hashear la contraseña antes de almacenarla
         bcrypt.hash(contra, 10, (err, hashedPassword) => {
+            console.log("Contraseña hasheada prueba:", { hashedPassword });
             if (err) {
                 console.error('Error al hashear la contraseña:', err);
                 return res.status(500).json({ error: 'Error al hashear la contraseña' });
