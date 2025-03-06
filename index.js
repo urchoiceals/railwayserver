@@ -1136,7 +1136,7 @@ app.get("/categories", (req, res) => {
                 img_cat: imgBase64
             };
         });
-        console.log('Salas disponibles:', roomsWithBase64); // Log para depuración
+        console.log('Salas disponibles:', roomsWithBase64); //  Log para depuración 
         res.status(200).json(categoriesWithBase64);
     });
 });
