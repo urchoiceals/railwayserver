@@ -23,7 +23,9 @@ app.use(bodyParse.urlencoded({ limit: '100mb', extended: true }));
 //   }
 //   console.log('Conexión exitosa a la basde e datos MySQL');
 // });
-
+app.get("/", (req,res) =>{
+    res.status(200).send("Hola Gay");
+});
 
 const mysql = require('mysql2');
 const connection = mysql.createConnection({
