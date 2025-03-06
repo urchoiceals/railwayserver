@@ -119,6 +119,7 @@ app.post("/user/login", (req, res) => {
         return res.status(500).json({ error: 'Error interno del servidor' });
       }
       if (results.length === 0) {
+        console.log("Datos recibidos:", { email, contra });
         return res.status(401).json({ error: "Credenciales incorrectas" });
       }
       const user = results[0];
