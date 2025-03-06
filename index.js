@@ -26,9 +26,9 @@ app.use(bodyParse.urlencoded({ limit: '100mb', extended: true }));
 
 const mysql = require('mysql');
 const connection = mysql.createConnection({
-  host: 'viaduct.proxy.rlwy.net',
+  host: 'metro.proxy.rlwy.net',
   user: 'root',
-  password: 'dCWwchdFnRuZMnZhWFyLRRQHGByISwtk',
+  password: 'CrVjGaHUplkkvKXKMTrdwoyDbXhueVMT',
   database: 'railway'
 });
 
