@@ -24,13 +24,14 @@ app.use(bodyParse.urlencoded({ limit: '100mb', extended: true }));
 //   console.log('Conexión exitosa a la basde e datos MySQL');
 // });
 
-const mysql = require('mysql');
+const mysql = require('mysql2');
 const connection = mysql.createConnection({
-  host: 'metro.proxy.rlwy.net',
-  user: 'root',
-  password: 'CrVjGaHUplkkvKXKMTrdwoyDbXhueVMT',
-  database: 'railway',
-  connectTimeout: 20000
+    host: 'nozomi.proxy.rlwy.net',  // Mismo host que usaste en Workbench
+    user: 'root',
+    password: 'ItrUKacSlXVnDszcOrqCaSgcRCcUwQMD',  // Asegúrate de que sea correcta
+    database: 'railway',
+    port: 24292,  // IMPORTANTE: Railway usa un puerto diferente (24292)
+    connectTimeout: 60000 // Aumenta el tiempo de espera a 60s
 });
 
 connection.connect((err) => {
@@ -40,7 +41,7 @@ connection.connect((err) => {
   }
   console.log('Conectado a la base de datos');
 });
-
+module.exports = connection;
 
 
 //--------------------------------------USERS-------------------------------------------------------------------------------------------------------
