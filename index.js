@@ -48,7 +48,7 @@ app.get("/", (req,res) =>{
     res.status(200).send("Hola Gay Puta");
 });
 app.get('/user', (req, res) => {
-    res.send('Este es el endpoint de usuarios.');
+    res.status(200).send('Este es el endpoint de usuarios.');
   });
 //--------------------------------------USERS-------------------------------------------------------------------------------------------------------
 app.post("/user/register", (req, res) => {
