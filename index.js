@@ -1105,7 +1105,7 @@ app.get("/rooms", (req, res) => {
             const imgBase64 = Buffer.from(imgBytes).toString('base64');
             return {
                 id_room: room.id_room,
-                pass_room: room.pass_room,
+                pass_room: room.pass_room, 
                 status_room: room.status_room,
                 id_cat: room.id_cat,
                 name_room: room.name_room,
@@ -1113,7 +1113,7 @@ app.get("/rooms", (req, res) => {
                 img_cat: imgBase64
             };
         });
-
+        
         res.status(200).json(roomsWithBase64);
     });
 });
@@ -1136,7 +1136,7 @@ app.get("/categories", (req, res) => {
                 img_cat: imgBase64
             };
         });
-
+        console.log('Salas disponibles:', roomsWithBase64); // Log para depuración
         res.status(200).json(categoriesWithBase64);
     });
 });
