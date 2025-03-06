@@ -29,7 +29,8 @@ const connection = mysql.createConnection({
   host: 'metro.proxy.rlwy.net',
   user: 'root',
   password: 'CrVjGaHUplkkvKXKMTrdwoyDbXhueVMT',
-  database: 'railway'
+  database: 'railway',
+  connectTimeout: 20000
 });
 
 connection.connect((err) => {
