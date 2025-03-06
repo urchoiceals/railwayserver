@@ -23,9 +23,7 @@ app.use(bodyParse.urlencoded({ limit: '100mb', extended: true }));
 //   }
 //   console.log('Conexión exitosa a la basde e datos MySQL');
 // });
-app.get("/", (req,res) =>{
-    res.status(200).send("Hola Gay Puta");
-});
+
 
 const mysql = require('mysql2');
 const connection = mysql.createConnection({
@@ -46,8 +44,12 @@ connection.connect((err) => {
 });
 module.exports = connection;
 
-
-
+app.get("/", (req,res) =>{
+    res.status(200).send("Hola Gay Puta");
+});
+app.get('/user', (req, res) => {
+    res.send('Este es el endpoint de usuarios.');
+  });
 //--------------------------------------USERS-------------------------------------------------------------------------------------------------------
 app.post("/user/register", (req, res) => {
     const { email, nick, img, contra } = req.body;
