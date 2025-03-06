@@ -9,22 +9,36 @@ app.use(bodyParse.json({ limit: '100mb' }));
 app.use(bodyParse.urlencoded({ limit: '100mb', extended: true }));
 
 
+// const mysql = require('mysql');
+
+// const dbUrl = 'mysql://root:dCWwchdFnRuZMnZhWFyLRRQHGByISwtk@viaduct.proxy.rlwy.net:21120/railway';
+
+// const connection = mysql.createConnection(dbUrl);
+
+
+// connection.connect((err) => {
+//   if (err) {
+//     console.error('Error al conectar a la base de datos:', err);
+//     return;
+//   }
+//   console.log('Conexión exitosa a la basde e datos MySQL');
+// });
+
 const mysql = require('mysql');
-
-const dbUrl = 'mysql://root:dCWwchdFnRuZMnZhWFyLRRQHGByISwtk@viaduct.proxy.rlwy.net:21120/railway';
-
-const connection = mysql.createConnection(dbUrl);
-
+const connection = mysql.createConnection({
+  host: 'viaduct.proxy.rlwy.net',
+  user: 'root',
+  password: 'dCWwchdFnRuZMnZhWFyLRRQHGByISwtk',
+  database: 'railway'
+});
 
 connection.connect((err) => {
   if (err) {
-    console.error('Error al conectar a la base de datos:', err);
+    console.error('Error al conectar a la base de datos:', err.stack);
     return;
   }
-  console.log('Conexión exitosa a la basde e datos MySQL');
+  console.log('Conectado a la base de datos');
 });
-
-
 
 
 
