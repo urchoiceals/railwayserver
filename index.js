@@ -1,12 +1,27 @@
 const express = require("express");
 const bodyParse = require("body-parser");
 const bcrypt = require('bcryptjs');
-
+const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(bodyParse.json({ limit: '100mb' }));
 app.use(bodyParse.urlencoded({ limit: '100mb', extended: true }));
+
+
+
+
+
+
+// Habilitar CORS para todas las rutas y todos los orígenes
+app.use(cors());
+
+// O si solo quieres habilitar CORS para tu dominio específico (por ejemplo, localhost:5173)
+app.use(cors({
+  origin: 'http://localhost:5173', // Reemplaza con tu dominio de frontend
+}));
+
+
 
 
 // const mysql = require('mysql');
