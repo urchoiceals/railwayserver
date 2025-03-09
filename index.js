@@ -18,7 +18,7 @@ app.use(cors());
 
 // O si solo quieres habilitar CORS para tu dominio específico (por ejemplo, localhost:5173)
 app.use(cors({
-  origin: 'http://localhost:51sd73', // Reemplaza con tu dominio de frontend
+  origin: 'http://localhost:5173', // Reemplaza con tu dominio de frontend
 }));
 
 
