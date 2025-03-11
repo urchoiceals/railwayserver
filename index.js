@@ -41,18 +41,14 @@ app.use(cors({
 
 
 const mysql = require('mysql2');
-const connection = mysql.createPool({
-    host: 'switchback.proxy.rlwy.net',
+const connection = mysql.createConnection({
+    host: 'switchback.proxy.rlwy.net',  // Mismo host que usaste en Workbench
     user: 'root',
     password: 'QLhaeZpVRcMvgyLsoySDMPNpJKrzXhbC',
     database: 'railway',
-    port: 56179,
-    connectTimeout: 60000, // Tiempo de espera de 60 segundos
-    waitForConnections: true, // Esperar si todas las conexiones están ocupadas
-    connectionLimit: 100, // Establecer en 0 para permitir conexiones ilimitadas
-    queueLimit: 0 // Sin límite en la cola de conexiones
-  });
-  
+    port: 56179,  // IMPORTANTE: Railway usa un puerto diferente (24292)
+    connectTimeout: 60000 // Aumenta el tiempo de espera a 60s
+});
 
 connection.connect((err) => {
   if (err) {
