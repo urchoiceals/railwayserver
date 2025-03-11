@@ -49,7 +49,7 @@ const connection = mysql.createPool({
     port: 56179,
     connectTimeout: 60000, // Tiempo de espera de 60 segundos
     waitForConnections: true, // Esperar si todas las conexiones están ocupadas
-    connectionLimit: 20, // Establecer en 0 para permitir conexiones ilimitadas
+    connectionLimit: 0, // Establecer en 0 para permitir conexiones ilimitadas
     queueLimit: 0 // Sin límite en la cola de conexiones
   });
   
