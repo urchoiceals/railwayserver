@@ -53,7 +53,7 @@ const connection = mysql.createPool({
     queueLimit: 0 // Sin límite en la cola de conexiones
   });
   
-
+// -----------------------
 connection.getConnection((err) => {
   if (err) {
     console.error('Error al conectar a la base de datos:', err.stack);
