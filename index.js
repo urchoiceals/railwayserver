@@ -1168,23 +1168,23 @@ app.post("/room/create", (req, res) => {
     const { id_cat, id_user, nameRoom, passRoom } = req.body;
 
     // Obtener una conexión individual del pool
-    connection.getConnection(function(err, conn) {
+    connection.getConnection(function(err, connection) {
         if (err) {
             console.error('Error al obtener conexión:', err);
             return res.status(500).json({ error: 'Error al obtener conexión a la base de datos' });
         }
 
         // Comenzar la transacción
-        conn.beginTransaction(function(err) {
+        connection.beginTransaction(function(err) {
             if (err) {
                 console.error('Error al iniciar la transacción:', err);
                 return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción' });
             }
 
             // Verificar si la sala ya existe
-            conn.query('SELECT id_room FROM room WHERE name_room = ?', [nameRoom], (error, results) => {
+            connection.query('SELECT id_room FROM room WHERE name_room = ?', [nameRoom], (error, results) => {
                 if (error) {
-                    conn.rollback(function() {
+                    connection.rollback(function() {
                         console.error('Error al verificar la existencia de la sala:', error);
                         return res.status(500).json({ error: 'Error interno del servidor al verificar la existencia de la sala' });
                     });
@@ -1193,7 +1193,7 @@ app.post("/room/create", (req, res) => {
 
                 if (results.length > 0) {
                     // La sala ya existe
-                    conn.rollback(function() {
+                    connection.rollback(function() {
                         console.error('Ya existe una sala con ese nombre.');
                         return res.status(400).json({ error: 'Ya existe una sala con ese nombre' });
                     });
@@ -1201,18 +1201,18 @@ app.post("/room/create", (req, res) => {
                 }
 
                 // Insertar la nueva sala si no existe
-                conn.query('INSERT INTO room (id_cat, name_room, pass_room) VALUES (?, ?, ?)', [id_cat, nameRoom, passRoom], (error, results) => {
+                connection.query('INSERT INTO room (id_cat, name_room, pass_room) VALUES (?, ?, ?)', [id_cat, nameRoom, passRoom], (error, results) => {
                     if (error) {
-                        conn.rollback(function() {
+                        connection.rollback(function() {
                             console.error('Error al insertar la nueva sala:', error);
                             return res.status(500).json({ error: 'Error interno del servidor' });
                         });
                         return; // Detener la ejecución en caso de error
                     }
                     const roomId = results.insertId;
-                    conn.query('INSERT INTO roomgame (id_room, id_user, admin) VALUES (?, ?, true)', [roomId, id_user], (error, results) => {
+                    connection.query('INSERT INTO roomgame (id_room, id_user, admin) VALUES (?, ?, true)', [roomId, id_user], (error, results) => {
                         if (error) {
-                            conn.rollback(function() {
+                            connection.rollback(function() {
                                 console.error('Error al insertar el nuevo juego de sala:', error);
                                 return res.status(500).json({ error: 'Error interno del servidor' });
                             });
@@ -1220,9 +1220,9 @@ app.post("/room/create", (req, res) => {
                         }
 
                         // Commit de la transacción si todas las inserciones fueron exitosas
-                        conn.commit(function(err) {
+                        connection.commit(function(err) {
                             if (err) {
-                                conn.rollback(function() {
+                                connection.rollback(function() {
                                     console.error('Error al hacer commit de la transacción:', err);
                                     return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
                                 });
