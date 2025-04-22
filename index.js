@@ -40,7 +40,8 @@ app.use(cors({
 // });
 
 
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise'); // Esto es importante para usar promesas
+
 const connection = mysql.createPool({
     host: 'switchback.proxy.rlwy.net',
     user: 'root',
@@ -1163,79 +1164,45 @@ app.get("/categories", (req, res) => {
 //--------------------------------------MULTIJUGADOR-------------------------------------------------------------------------------------------------------
 
 
-app.post("/room/create", (req, res) => {
+app.post("/room/create", async (req, res) => {
     const { id_cat, id_user, nameRoom, passRoom } = req.body;
 
-    // Obtener una conexión individual del pool
-    connection.getConnection(function(err, conn) {
-        if (err) {
-            console.error('Error al obtener conexión:', err);
-            return res.status(500).json({ error: 'Error al obtener conexión a la base de datos' });
+    const conn = await connection.getConnection(); // Obtenemos una conexión del pool
+
+    try {
+        // Comenzamos la transacción
+        await conn.beginTransaction();
+
+        // Verificar si la sala ya existe
+        const [rows] = await conn.execute('SELECT id_room FROM room WHERE name_room = ?', [nameRoom]);
+
+        if (rows.length > 0) {
+            // La sala ya existe
+            await conn.rollback();
+            return res.status(400).json({ error: 'Ya existe una sala con ese nombre' });
         }
 
-        // Comenzar la transacción
-        conn.beginTransaction(function(err) {
-            if (err) {
-                console.error('Error al iniciar la transacción:', err);
-                return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción' });
-            }
+        // Insertar la nueva sala si no existe
+        const [result] = await conn.execute('INSERT INTO room (id_cat, name_room, pass_room) VALUES (?, ?, ?)', [id_cat, nameRoom, passRoom]);
+        const roomId = result.insertId;
 
-            // Verificar si la sala ya existe
-            conn.query('SELECT id_room FROM room WHERE name_room = ?', [nameRoom], (error, results) => {
-                if (error) {
-                    conn.rollback(function() {
-                        console.error('Error al verificar la existencia de la sala:', error);
-                        return res.status(500).json({ error: 'Error interno del servidor al verificar la existencia de la sala' });
-                    });
-                    return; // Detener la ejecución en caso de error
-                }
+        // Insertar la relación de la sala con el usuario (roomgame)
+        await conn.execute('INSERT INTO roomgame (id_room, id_user, admin) VALUES (?, ?, true)', [roomId, id_user]);
 
-                if (results.length > 0) {
-                    // La sala ya existe
-                    conn.rollback(function() {
-                        console.error('Ya existe una sala con ese nombre.');
-                        return res.status(400).json({ error: 'Ya existe una sala con ese nombre' });
-                    });
-                    return; // Detener la ejecución
-                }
+        // Commit de la transacción
+        await conn.commit();
 
-                // Insertar la nueva sala si no existe
-                conn.query('INSERT INTO room (id_cat, name_room, pass_room) VALUES (?, ?, ?)', [id_cat, nameRoom, passRoom], (error, results) => {
-                    if (error) {
-                        conn.rollback(function() {
-                            console.error('Error al insertar la nueva sala:', error);
-                            return res.status(500).json({ error: 'Error interno del servidor' });
-                        });
-                        return; // Detener la ejecución en caso de error
-                    }
-                    const roomId = results.insertId;
-                    conn.query('INSERT INTO roomgame (id_room, id_user, admin) VALUES (?, ?, true)', [roomId, id_user], (error, results) => {
-                        if (error) {
-                            conn.rollback(function() {
-                                console.error('Error al insertar el nuevo juego de sala:', error);
-                                return res.status(500).json({ error: 'Error interno del servidor' });
-                            });
-                            return; // Detener la ejecución en caso de error
-                        }
-
-                        // Commit de la transacción si todas las inserciones fueron exitosas
-                        conn.commit(function(err) {
-                            if (err) {
-                                conn.rollback(function() {
-                                    console.error('Error al hacer commit de la transacción:', err);
-                                    return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
-                                });
-                                return; // Detener la ejecución en caso de error
-                            }
-
-                            console.log('Transacción completada con éxito.');
-                            res.status(201).json(roomId);
-                        });
-                    });
-                });
-            });
-        });
-    });
+        console.log('Transacción completada con éxito.');
+        res.status(201).json(roomId);
+    } catch (error) {
+        // Si ocurre un error, se hace rollback
+        await conn.rollback();
+        console.error('Error durante la transacción:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    } finally {
+        // Siempre liberar la conexión después de usarla
+        conn.release();
+    }
 });
 
 
