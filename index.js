@@ -40,7 +40,7 @@ app.use(cors({
 // });
 
 
-const mysql = require('mysql2/promise'); // Esto es importante para usar promesas
+const mysql = require('mysql2'); // Esto es importante para usar promesas
 
 const connection = mysql.createPool({
     host: 'switchback.proxy.rlwy.net',
