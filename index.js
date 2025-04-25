@@ -19,8 +19,8 @@ app.use(cors());
 // O si solo quieres habilitar CORS para tu dominio específico (por ejemplo, localhost:5173)
 app.use(cors({
     origin: ['http://localhost:5173', 'https://ur-choice-web-tfg.vercel.app'], // Lista de orígenes permitidos
-  }));
-  
+}));
+
 
 
 
@@ -52,24 +52,24 @@ const connection = mysql.createPool({
     waitForConnections: true, // Esperar si todas las conexiones están ocupadas
     connectionLimit: 0, // Establecer en 0 para permitir conexiones ilimitadas
     queueLimit: 0 // Sin límite en la cola de conexiones
-  });
-  
+});
+
 // -----------------------
 connection.getConnection((err) => {
-  if (err) {
-    console.error('Error al conectar a la base de datos:', err.stack);
-    return;
-  }
-  console.log('Conectado a la base de datos');
+    if (err) {
+        console.error('Error al conectar a la base de datos:', err.stack);
+        return;
+    }
+    console.log('Conectado a la base de datos');
 });
 module.exports = connection;
 
-app.get("/", (req,res) =>{
+app.get("/", (req, res) => {
     res.status(200).send("Hola Gay Puta");
 });
 app.get('/user', (req, res) => {
     res.status(200).send('Este es el endpoint de usuarios.');
-  });
+});
 //--------------------------------------USERS-------------------------------------------------------------------------------------------------------
 app.post("/user/register", (req, res) => {
     const { email, nick, img, contra } = req.body;
@@ -137,44 +137,44 @@ app.post("/user/login", (req, res) => {
     const { email, contra } = req.body;
 
     connection.query('SELECT * FROM users WHERE email_user = ?', [email], (error, results) => {
-      if (error) {
-        console.error('Error al realizar la consulta:', error);
-        return res.status(500).json({ error: 'Error interno del servidor' });
-      }
-      if (results.length === 0) {
-        console.log("Datos recibidos:", { email, contra });
-        return res.status(401).json({ error: "Credenciales incorrectas" });
-      }
-      const user = results[0];
-
-      // Comparar la contraseña con el hash almacenado
-      bcrypt.compare(contra, user.pass_user, (err, isMatch) => {
-        if (err) {
-          console.error('Error al comparar contraseñas:', err);
-          return res.status(500).json({ error: 'Error interno del servidor' });
+        if (error) {
+            console.error('Error al realizar la consulta:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
         }
-        if (!isMatch) {
-          return res.status(401).json({ error: "Credenciales incorrectas" });
+        if (results.length === 0) {
+            console.log("Datos recibidos:", { email, contra });
+            return res.status(401).json({ error: "Credenciales incorrectas" });
         }
+        const user = results[0];
 
-        // Tratar la imagen del usuario en base64
-        const imgBytes = user.img_user;
-        let imgBase64 = null; // Inicializa imgBase64 como null
-        if (imgBytes !== null) {
-            imgBase64 = Buffer.from(imgBytes).toString('base64');
-        }
+        // Comparar la contraseña con el hash almacenado
+        bcrypt.compare(contra, user.pass_user, (err, isMatch) => {
+            if (err) {
+                console.error('Error al comparar contraseñas:', err);
+                return res.status(500).json({ error: 'Error interno del servidor' });
+            }
+            if (!isMatch) {
+                return res.status(401).json({ error: "Credenciales incorrectas" });
+            }
 
-        const userWithBase64Image = {
-          id_user: user.id_user,
-          email_user: user.email_user,
-          nick_user: user.nick_user,
-          pass_user: user.pass_user,
-          img_user: imgBase64,
-          GamesPlayed: user.GamesPlayed
-        };
+            // Tratar la imagen del usuario en base64
+            const imgBytes = user.img_user;
+            let imgBase64 = null; // Inicializa imgBase64 como null
+            if (imgBytes !== null) {
+                imgBase64 = Buffer.from(imgBytes).toString('base64');
+            }
 
-        res.status(200).json(userWithBase64Image);
-      });
+            const userWithBase64Image = {
+                id_user: user.id_user,
+                email_user: user.email_user,
+                nick_user: user.nick_user,
+                pass_user: user.pass_user,
+                img_user: imgBase64,
+                GamesPlayed: user.GamesPlayed
+            };
+
+            res.status(200).json(userWithBase64Image);
+        });
     });
 });
 
@@ -200,7 +200,7 @@ app.get("/users/:id_user", (req, res) => {
         if (results.length === 0) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
-        
+
         // Tratar las imágenes en base64
         const userWithBase64 = results.map(user => {
             const imgBytes = user.img_user;
@@ -217,7 +217,7 @@ app.get("/users/:id_user", (req, res) => {
                 GamesPlayed: user.GamesPlayed
             };
         });
-        
+
         res.status(200).json(userWithBase64[0]);
     });
 });
@@ -268,7 +268,7 @@ app.post("/user/UpdateName", (req, res) => {
 // Actualizar el nombre de un usuario por su ID
 app.post("/user/UpdateIMG", (req, res) => {
     const { user_id, img_user } = req.body;
-    
+
     const imgBytes = Buffer.from(img_user, 'base64');
 
     connection.query(
@@ -340,7 +340,7 @@ app.get("/elements/:categoryId", (req, res) => {
         if (error) {
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
-        
+
         // Convertir las imágenes de los elementos a Base64
         const elementsWithBase64 = results.map(element => {
             const imgBytes = element.img_elem; // Suponiendo que la columna img_elem contiene los bytes de la imagen
@@ -360,7 +360,7 @@ app.get("/elements/:categoryId", (req, res) => {
 
 app.post("/element/winner", (req, res) => {
     const { id_elem, victories, id_user } = req.body;
-    
+
     // Convertir la cadena de victorias a un número antes de sumar 1
     const updatedVictories = parseInt(victories) + 1;
 
@@ -407,27 +407,27 @@ app.get("/categories/all", (req, res) => {
 
 app.get('/categories/mine/:user_id', (req, res) => {
     const userId = req.params.user_id;
-  
+
     const query = 'SELECT * FROM categories WHERE id_user = ?';
-    
+
     connection.query(query, [userId], (err, results) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
 
 
-      const categoriesWithBase64 = results.map(category => {
-        const imgBytes = category.img_cat;
-        const imgBase64 = Buffer.from(imgBytes).toString('base64');
-        return {
-            id_cat: category.id_cat,
-            name_cat: category.name_cat,
-            img_cat: imgBase64
-        };
+        const categoriesWithBase64 = results.map(category => {
+            const imgBytes = category.img_cat;
+            const imgBase64 = Buffer.from(imgBytes).toString('base64');
+            return {
+                id_cat: category.id_cat,
+                name_cat: category.name_cat,
+                img_cat: imgBase64
+            };
+        });
+        res.status(200).json(categoriesWithBase64);
     });
-    res.status(200).json(categoriesWithBase64);
-    });
-  });
+});
 
 app.get("/categories/:id_user", (req, res) => {
     const userId = req.params.id_user;
@@ -462,7 +462,7 @@ app.get("/categories/:id_user", (req, res) => {
 app.delete("/categories/delete/:id_cat", (req, res) => {
     const id_cat = req.params.id_cat;
 
-    connection.beginTransaction(function(err) {
+    connection.beginTransaction(function (err) {
         if (err) {
             console.error('Error al iniciar la transacción:', err);
             return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción' });
@@ -471,7 +471,7 @@ app.delete("/categories/delete/:id_cat", (req, res) => {
         // Eliminar los elementos asociados a la categoría
         connection.query('DELETE FROM elements WHERE id_cat = ?', [id_cat], (error, deleteElementsResult) => {
             if (error) {
-                connection.rollback(function() {
+                connection.rollback(function () {
                     console.error('Error al eliminar los elementos:', error);
                     return res.status(500).json({ error: 'Error interno del servidor al eliminar elementos' });
                 });
@@ -481,7 +481,7 @@ app.delete("/categories/delete/:id_cat", (req, res) => {
             // Eliminar la categoría
             connection.query('DELETE FROM categories WHERE id_cat = ?', [id_cat], (error, deleteCategoryResult) => {
                 if (error) {
-                    connection.rollback(function() {
+                    connection.rollback(function () {
                         console.error('Error al eliminar la categoría:', error);
                         return res.status(500).json({ error: 'Error interno del servidor al eliminar categoría' });
                     });
@@ -489,9 +489,9 @@ app.delete("/categories/delete/:id_cat", (req, res) => {
                 }
 
                 // Commit de la transacción si todas las eliminaciones fueron exitosas
-                connection.commit(function(err) {
+                connection.commit(function (err) {
                     if (err) {
-                        connection.rollback(function() {
+                        connection.rollback(function () {
                             console.error('Error al hacer commit de la transacción:', err);
                             return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
                         });
@@ -514,7 +514,7 @@ app.post("/categories/update", (req, res) => {
     const imgBytes = Buffer.from(img_cat, 'base64');
 
     // Comenzar una transacción
-    connection.beginTransaction(function(err) {
+    connection.beginTransaction(function (err) {
         if (err) {
             console.error('Error al iniciar la transacción:', err);
             return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción' });
@@ -523,7 +523,7 @@ app.post("/categories/update", (req, res) => {
         // Eliminar los elementos asociados a la categoría
         connection.query('DELETE FROM elements WHERE id_cat = ?', [id_cat], (error, deleteElementsResult) => {
             if (error) {
-                connection.rollback(function() {
+                connection.rollback(function () {
                     console.error('Error al eliminar los elementos:', error);
                     return res.status(500).json({ error: 'Error interno del servidor al eliminar elementos' });
                 });
@@ -533,7 +533,7 @@ app.post("/categories/update", (req, res) => {
             // Eliminar la categoría
             connection.query('DELETE FROM categories WHERE id_cat = ?', [id_cat], (error, deleteCategoryResult) => {
                 if (error) {
-                    connection.rollback(function() {
+                    connection.rollback(function () {
                         console.error('Error al eliminar la categoría:', error);
                         return res.status(500).json({ error: 'Error interno del servidor al eliminar categoría' });
                     });
@@ -543,7 +543,7 @@ app.post("/categories/update", (req, res) => {
                 // Insertar la nueva categoría
                 connection.query('INSERT INTO categories (name_cat, img_cat, id_user) VALUES (?, ?, ?)', [name_cat, imgBytes, id_user], (error, categoryResult) => {
                     if (error) {
-                        connection.rollback(function() {
+                        connection.rollback(function () {
                             console.error('Error al insertar la nueva categoría:', error);
                             return res.status(500).json({ error: 'Error interno del servidor al insertar categoría' });
                         });
@@ -559,7 +559,7 @@ app.post("/categories/update", (req, res) => {
                     // Insertar los nuevos elementos
                     connection.query(query, [elementValues], (error, elementResult) => {
                         if (error) {
-                            connection.rollback(function() {
+                            connection.rollback(function () {
                                 console.error('Error al insertar los elementos:', error);
                                 return res.status(500).json({ error: 'Error interno del servidor al insertar elementos' });
                             });
@@ -567,9 +567,9 @@ app.post("/categories/update", (req, res) => {
                         }
 
                         // Commit de la transacción si todas las inserciones fueron exitosas
-                        connection.commit(function(err) {
+                        connection.commit(function (err) {
                             if (err) {
-                                connection.rollback(function() {
+                                connection.rollback(function () {
                                     console.error('Error al hacer commit de la transacción:', err);
                                     return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
                                 });
@@ -593,73 +593,80 @@ app.post("/categories/create", (req, res) => {
     // Convertir la imagen Base64 a bytes
     const imgBytes = Buffer.from(img_cat, 'base64');
 
-    // Comenzar una transacción
-    connection.beginTransaction(function(err) {
-        if (err) {
-            console.error('Error al iniciar la transacción:', err);
-            return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción'});
-        }
+    connection.getConnection(function(err, connection) {
+        
 
-        // Verificar si la categoría ya existe
-        connection.query('SELECT id_cat FROM categories WHERE name_cat = ?', [name_cat], (error, results) => {
-            if (error) {
-                connection.rollback(function() {
-                    console.error('Error al verificar la existencia de la categoría:', error);
-                    return res.status(500).json({ error: 'Error interno del servidor al verificar la existencia de la categoría' });
-                });
-                return; // Detener la ejecución en caso de error
+        // Comenzar una transacción
+        connection.beginTransaction(function (err) {
+            if (err) {
+                console.error('Error al iniciar la transacción:', err);
+                return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción' });
             }
 
-            if (results.length > 0) {
-                // La categoría ya existe
-                connection.rollback(function() {
-                    console.error('Ya existe una categoría con ese nombre.');
-                    return res.status(400).json({ error: 'Ya existe una categoría con ese nombre' });
-                });
-                return; // Detener la ejecución
-            }
-
-            // Insertar la nueva categoría si no existe
-            connection.query('INSERT INTO categories (name_cat, img_cat, id_user ) VALUES (?, ?, ?)', [name_cat, imgBytes, id_user], (error, categoryResult) => {
-                if (error) {
-                    connection.rollback(function() {
-                        console.error('Error al insertar la nueva categoría:', error);
-                        return res.status(500).json({ error: 'Error interno del servidor al insertar categoría' });
+            // Verificar si la categoría ya existe
+            connection.query('SELECT id_cat FROM categories WHERE name_cat = ?', [name_cat], (error, results) => {
+                if (err) {
+                    connection.rollback(function () {
+                        console.error('Error al verificar la existencia de la categoría:', error);
+                        return res.status(500).json({ error: 'Error interno del servidor al verificar la existencia de la categoría' });
                     });
                     return; // Detener la ejecución en caso de error
                 }
 
-                const id_cat = categoryResult.insertId; // Obtener el ID de la categoría recién insertada
+                if (results.length > 0) {
+                    // La categoría ya existe
+                    connection.rollback(function () {
+                        console.error('Ya existe una categoría con ese nombre.');
+                        return res.status(400).json({ error: 'Ya existe una categoría con ese nombre' });
+                    });
+                    return; // Detener la ejecución
+                }
 
-                let query = 'INSERT INTO elements (img_elem, name_elem, id_cat) VALUES ?';        
-                let elementValues = elements.map(element => [Buffer.from(element.img_elem, 'base64'), element.name_elem, id_cat]);
-
-                connection.query(query, [elementValues], (error, elementResult) => {
-                    if (error) {
-                        connection.rollback(function() {
-                            console.error('Error al insertar los elementos:', error);
-                            return res.status(500).json({ error: 'Error interno del servidor al insertar elementos' });
+                // Insertar la nueva categoría si no existe
+                connection.query('INSERT INTO categories (name_cat, img_cat, id_user ) VALUES (?, ?, ?)', [name_cat, imgBytes, id_user], (error, categoryResult) => {
+                    if (err) {
+                        connection.rollback(function () {
+                            console.error('Error al insertar la nueva categoría:', error);
+                            return res.status(500).json({ error: 'Error interno del servidor al insertar categoría' });
                         });
                         return; // Detener la ejecución en caso de error
                     }
 
-                    // Commit de la transacción si todas las inserciones fueron exitosas
-                    connection.commit(function(err) {
+                    const id_cat = categoryResult.insertId; // Obtener el ID de la categoría recién insertada
+
+                    let query = 'INSERT INTO elements (img_elem, name_elem, id_cat) VALUES ?';
+                    let elementValues = elements.map(element => [Buffer.from(element.img_elem, 'base64'), element.name_elem, id_cat]);
+
+                    connection.query(query, [elementValues], (error, elementResult) => {
                         if (err) {
-                            connection.rollback(function() {
-                                console.error('Error al hacer commit de la transacción:', err);
-                                return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
+                            connection.rollback(function () {
+                                console.error('Error al insertar los elementos:', error);
+                                return res.status(500).json({ error: 'Error interno del servidor al insertar elementos' });
                             });
                             return; // Detener la ejecución en caso de error
                         }
 
-                        console.log('Transacción completada con éxito.');
-                        res.status(200).json({ message: 'Transacción completada con éxito.' });
+                        // Commit de la transacción si todas las inserciones fueron exitosas
+                        connection.commit(function (err) {
+                            if (err) {
+                                connection.rollback(function () {
+                                    console.error('Error al hacer commit de la transacción:', err);
+                                    return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
+                                });
+                                return; // Detener la ejecución en caso de error
+                            }
+
+                            console.log('Transacción completada con éxito.');
+                            res.status(200).json({ message: 'Transacción completada con éxito.' });
+                        });
                     });
                 });
             });
         });
+
     });
+
+
 });
 
 
@@ -677,7 +684,7 @@ app.get("/category/:id", (req, res) => {
             console.error('Error al obtener la categoría:', error);
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
-        
+
         if (results.length === 0) {
             return res.status(404).json({ error: 'Categoría no encontrada' });
         }
@@ -687,7 +694,7 @@ app.get("/category/:id", (req, res) => {
         // Convertir la imagen de la categoría a Base64
         const imgBytes = category.img_cat;
         const imgBase64 = Buffer.from(imgBytes).toString('base64');
-        
+
         // Crear un objeto con la categoría y la imagen en Base64
         const categoryWithBase64 = {
             id_cat: category.id_cat,
@@ -704,24 +711,24 @@ app.get("/category/:id", (req, res) => {
 
 app.post('/fav/insert', (req, res) => {
     const { id_user, id_cat } = req.body;
-  
+
     const query = 'INSERT INTO favs (id_user, id_cat) VALUES (?, ?)';
     const values = [id_user, id_cat];
-  
+
     connection.query(query, values, (err, result) => {
-      if (err) {
-        console.error('Error al insertar:', err);
-        res.status(500).send('Error al insertar en la base de datos');
-        return;
-      }
-      console.log('Favorito insertado correctamente:', result);
-      res.status(200).send('Favorito insertado correctamente');
+        if (err) {
+            console.error('Error al insertar:', err);
+            res.status(500).send('Error al insertar en la base de datos');
+            return;
+        }
+        console.log('Favorito insertado correctamente:', result);
+        res.status(200).send('Favorito insertado correctamente');
     });
-  });
+});
 
-  
 
-  app.delete('/fav/delete/:id_user/:id_cat', (req, res) => {
+
+app.delete('/fav/delete/:id_user/:id_cat', (req, res) => {
     const id_user = req.params.id_user;
     const id_cat = req.params.id_cat;
 
@@ -740,82 +747,82 @@ app.post('/fav/insert', (req, res) => {
 });
 
 
-  app.get('/favoritos/:id_user', (req, res) => {
+app.get('/favoritos/:id_user', (req, res) => {
     const id_user = req.params.id_user;
-  
+
     const query = `
       SELECT favs.id_fav, favs.id_user, favs.id_cat, categories.name_cat, categories.img_cat
       FROM favs
       INNER JOIN categories ON favs.id_cat = categories.id_cat
       WHERE favs.id_user = ?
     `;
-  
+
     connection.query(query, id_user, (err, results) => {
-      if (err) {
-        console.error('Error al obtener favoritos:', err);
-        res.status(500).send('Error al obtener favoritos de la base de datos');
-        return;
-      }
-  
-      if (results.length === 0) {
-        res.status(404).send('El usuario no tiene categorías favoritas');
-        return;
-      }
-  
-      const favoritosConDetalle = results.map(favorito => {
-        const imgBytes = Buffer.from(favorito.img_cat, 'base64').toString('base64');
-        return {
-          id_fav: favorito.id_fav,
-          id_user: favorito.id_user,
-          id_cat: favorito.id_cat,
-          name_cat: favorito.name_cat,
-          img_cat: imgBytes
-        };
-      });
-  
-      res.status(200).json(favoritosConDetalle);
+        if (err) {
+            console.error('Error al obtener favoritos:', err);
+            res.status(500).send('Error al obtener favoritos de la base de datos');
+            return;
+        }
+
+        if (results.length === 0) {
+            res.status(404).send('El usuario no tiene categorías favoritas');
+            return;
+        }
+
+        const favoritosConDetalle = results.map(favorito => {
+            const imgBytes = Buffer.from(favorito.img_cat, 'base64').toString('base64');
+            return {
+                id_fav: favorito.id_fav,
+                id_user: favorito.id_user,
+                id_cat: favorito.id_cat,
+                name_cat: favorito.name_cat,
+                img_cat: imgBytes
+            };
+        });
+
+        res.status(200).json(favoritosConDetalle);
     });
-  });
+});
 
 //--------------------------------------SAVED-------------------------------------------------------------------------------------------------------
 
 
 app.post('/saved/insert', (req, res) => {
     const { id_user, id_cat } = req.body;
-  
+
     // Primero, inserta en la tabla saved
     const insertQuery = 'INSERT INTO saved (id_user, id_cat) VALUES (?, ?)';
     const insertValues = [id_user, id_cat];
-  
+
     connection.query(insertQuery, insertValues, (insertErr, insertResult) => {
-      if (insertErr) {
-        console.error('Error al insertar:', insertErr);
-        res.status(500).send('Error al insertar en la base de datos');
-        return;
-      }
-  
-      console.log('Guardado insertado correctamente:', insertResult);
-  
-      // Luego, elimina de la tabla favs
-      const deleteQuery = 'DELETE FROM favs WHERE id_user = ? AND id_cat = ?';
-      const deleteValues = [id_user, id_cat];
-  
-      connection.query(deleteQuery, deleteValues, (deleteErr, deleteResult) => {
-        if (deleteErr) {
-          console.error('Error al eliminar:', deleteErr);
-          res.status(500).send('Error al eliminar de la base de datos');
-          return;
+        if (insertErr) {
+            console.error('Error al insertar:', insertErr);
+            res.status(500).send('Error al insertar en la base de datos');
+            return;
         }
-  
-        console.log('Favorito eliminado correctamente:', deleteResult);
-        res.status(200).send('Guardado insertado y favorito eliminado correctamente');
-      });
+
+        console.log('Guardado insertado correctamente:', insertResult);
+
+        // Luego, elimina de la tabla favs
+        const deleteQuery = 'DELETE FROM favs WHERE id_user = ? AND id_cat = ?';
+        const deleteValues = [id_user, id_cat];
+
+        connection.query(deleteQuery, deleteValues, (deleteErr, deleteResult) => {
+            if (deleteErr) {
+                console.error('Error al eliminar:', deleteErr);
+                res.status(500).send('Error al eliminar de la base de datos');
+                return;
+            }
+
+            console.log('Favorito eliminado correctamente:', deleteResult);
+            res.status(200).send('Guardado insertado y favorito eliminado correctamente');
+        });
     });
-  });
-  
+});
 
 
-  app.delete('/saved/fav/delete/:id_user/:id_cat', (req, res) => {
+
+app.delete('/saved/fav/delete/:id_user/:id_cat', (req, res) => {
     const id_user = req.params.id_user;
     const id_cat = req.params.id_cat;
 
@@ -847,7 +854,7 @@ app.post('/saved/insert', (req, res) => {
 });
 
 
-  app.delete('/saved/delete/:id_user/:id_cat', (req, res) => {
+app.delete('/saved/delete/:id_user/:id_cat', (req, res) => {
     const id_user = req.params.id_user;
     const id_cat = req.params.id_cat;
 
@@ -866,7 +873,7 @@ app.post('/saved/insert', (req, res) => {
 });
 
 
-  app.get('/saved/:id_user', (req, res) => {
+app.get('/saved/:id_user', (req, res) => {
     const id_user = req.params.id_user;
 
     const query = `
@@ -877,29 +884,29 @@ app.post('/saved/insert', (req, res) => {
     `;
 
     connection.query(query, id_user, (err, results) => {
-      if (err) {
-        console.error('Error al obtener guardados:', err);
-        res.status(500).send('Error al obtener guardados de la base de datos');
-        return;
-      }
+        if (err) {
+            console.error('Error al obtener guardados:', err);
+            res.status(500).send('Error al obtener guardados de la base de datos');
+            return;
+        }
 
-      if (results.length === 0) {
-        res.status(404).send('El usuario no tiene categorías guardadas');
-        return;
-      }
+        if (results.length === 0) {
+            res.status(404).send('El usuario no tiene categorías guardadas');
+            return;
+        }
 
-      const savedConDetalle = results.map(saved => {
-        const imgBytes = Buffer.from(saved.img_cat, 'base64').toString('base64');
-        return {
-          id_saved: saved.id_saved,
-          id_user: saved.id_user,
-          id_cat: saved.id_cat,
-          name_cat: saved.name_cat,
-          img_cat: imgBytes
-        };
-      });
+        const savedConDetalle = results.map(saved => {
+            const imgBytes = Buffer.from(saved.img_cat, 'base64').toString('base64');
+            return {
+                id_saved: saved.id_saved,
+                id_user: saved.id_user,
+                id_cat: saved.id_cat,
+                name_cat: saved.name_cat,
+                img_cat: imgBytes
+            };
+        });
 
-      res.status(200).json(savedConDetalle);
+        res.status(200).json(savedConDetalle);
     });
 });
 
@@ -969,7 +976,7 @@ app.put("/friends/update", (req, res) => {
 
 app.get("/friends/count/:id_user", (req, res) => {
     const { id_user } = req.params;
-    
+
     connection.query('SELECT COUNT(*) AS count FROM friends WHERE (id_us1 = ? OR id_us2 = ?) AND estado = "Aceptada"', [id_user, id_user], (error, results) => {
         if (error) {
             console.error('Error al realizar la consulta:', error);
@@ -984,7 +991,7 @@ app.get("/friends/count/:id_user", (req, res) => {
 app.get("/friends/:id_user", (req, res) => {
     const { id_user } = req.params;
 
-    
+
     connection.query('SELECT * FROM friends WHERE (id_us1 = ? OR id_us2 = ?) AND estado = "Aceptada"', [id_user, id_user], (error, results) => {
         if (error) {
             console.error('Error al realizar la consulta:', error);
@@ -1002,7 +1009,7 @@ app.get("/friends/:id_user", (req, res) => {
             }
         });
 
-        
+
 
         if (userIds.length === 0) {
             // No se encontraron usuarios asociados a los amigos
@@ -1029,7 +1036,7 @@ app.get("/friends/:id_user", (req, res) => {
                 if (imgBytes !== null) {
                     imgBase64 = Buffer.from(imgBytes).toString('base64');
                 }
-                
+
                 return {
                     id_user: user.id_user,
                     email_user: user.email_user,
@@ -1118,14 +1125,14 @@ app.get("/rooms", (req, res) => {
             console.error('Error al obtener los datos de la tabla room:', error);
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
-        
+
         // Convertir las imágenes de las habitaciones a Base64
         const roomsWithBase64 = results.map(room => {
             const imgBytes = room.img_cat; // Suponiendo que la columna img_cat contiene los bytes de la imagen
             const imgBase64 = Buffer.from(imgBytes).toString('base64');
             return {
                 id_room: room.id_room,
-                pass_room: room.pass_room, 
+                pass_room: room.pass_room,
                 status_room: room.status_room,
                 id_cat: room.id_cat,
                 name_room: room.name_room,
@@ -1133,7 +1140,7 @@ app.get("/rooms", (req, res) => {
                 img_cat: imgBase64
             };
         });
-        
+
         res.status(200).json(roomsWithBase64);
     });
 });
@@ -1168,14 +1175,14 @@ app.post("/room/create", (req, res) => {
     const { id_cat, id_user, nameRoom, passRoom } = req.body;
 
     // Obtener una conexión individual del pool
-    connection.getConnection(function(err, connection) {
+    connection.getConnection(function (err, connection) {
         if (err) {
             console.error('Error al obtener conexión:', err);
             return res.status(500).json({ error: 'Error al obtener conexión a la base de datos' });
         }
 
         // Comenzar la transacción
-        connection.beginTransaction(function(err) {
+        connection.beginTransaction(function (err) {
             if (err) {
                 console.error('Error al iniciar la transacción:', err);
                 return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción' });
@@ -1184,7 +1191,7 @@ app.post("/room/create", (req, res) => {
             // Verificar si la sala ya existe
             connection.query('SELECT id_room FROM room WHERE name_room = ?', [nameRoom], (error, results) => {
                 if (error) {
-                    connection.rollback(function() {
+                    connection.rollback(function () {
                         console.error('Error al verificar la existencia de la sala:', error);
                         return res.status(500).json({ error: 'Error interno del servidor al verificar la existencia de la sala' });
                     });
@@ -1193,7 +1200,7 @@ app.post("/room/create", (req, res) => {
 
                 if (results.length > 0) {
                     // La sala ya existe
-                    connection.rollback(function() {
+                    connection.rollback(function () {
                         console.error('Ya existe una sala con ese nombre.');
                         return res.status(400).json({ error: 'Ya existe una sala con ese nombre' });
                     });
@@ -1203,7 +1210,7 @@ app.post("/room/create", (req, res) => {
                 // Insertar la nueva sala si no existe
                 connection.query('INSERT INTO room (id_cat, name_room, pass_room) VALUES (?, ?, ?)', [id_cat, nameRoom, passRoom], (error, results) => {
                     if (error) {
-                        connection.rollback(function() {
+                        connection.rollback(function () {
                             console.error('Error al insertar la nueva sala:', error);
                             return res.status(500).json({ error: 'Error interno del servidor' });
                         });
@@ -1212,7 +1219,7 @@ app.post("/room/create", (req, res) => {
                     const roomId = results.insertId;
                     connection.query('INSERT INTO roomgame (id_room, id_user, admin) VALUES (?, ?, true)', [roomId, id_user], (error, results) => {
                         if (error) {
-                            connection.rollback(function() {
+                            connection.rollback(function () {
                                 console.error('Error al insertar el nuevo juego de sala:', error);
                                 return res.status(500).json({ error: 'Error interno del servidor' });
                             });
@@ -1220,9 +1227,9 @@ app.post("/room/create", (req, res) => {
                         }
 
                         // Commit de la transacción si todas las inserciones fueron exitosas
-                        connection.commit(function(err) {
+                        connection.commit(function (err) {
                             if (err) {
-                                connection.rollback(function() {
+                                connection.rollback(function () {
                                     console.error('Error al hacer commit de la transacción:', err);
                                     return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
                                 });
@@ -1291,14 +1298,14 @@ app.get("/room/:id_room/users", (req, res) => {
 });
 
 app.post("/room/updateVote", (req, res) => {
-    const { id_room, id_user, vote_game } = req.body; 
+    const { id_room, id_user, vote_game } = req.body;
 
     connection.query('UPDATE roomgame SET vote_game = ? WHERE id_room = ? AND id_user = ?', [vote_game, id_room, id_user], (error, results) => {
         if (error) {
             console.error('Error al actualizar el voto en roomgame:', error);
             return res.status(500).json({ success: false, error: 'Error interno del servidor' });
         }
-        
+
         // La actualización se realizó con éxito
         console.log('Voto actualizado correctamente en la tabla roomgame');
         res.status(200).json({ success: true, message: 'Voto actualizado correctamente' });
@@ -1361,7 +1368,7 @@ app.post("/room/start", (req, res) => {
                                 return res.status(500).json({ error: 'Error interno del servidor' });
                             }
                             console.log('Estado de votación del usuario de la sala actualizado correctamente');
-                            res.status(201).json({ message: 'La sala se ha cerrado correctamente'});
+                            res.status(201).json({ message: 'La sala se ha cerrado correctamente' });
                         });
                     });
                 } else {
@@ -1385,14 +1392,14 @@ app.post("/room/start", (req, res) => {
 
 
 app.post("/room/updateVote", (req, res) => {
-    const { id_room, id_user, vote_game } = req.body; 
+    const { id_room, id_user, vote_game } = req.body;
 
     connection.query('UPDATE roomgame SET vote_game = ? WHERE id_room = ? AND id_user = ?', [vote_game, id_room, id_user], (error, results) => {
         if (error) {
             console.error('Error al actualizar el voto en roomgame:', error);
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
-        
+
         // La actualización se realizó con éxito
         console.log('Voto actualizado correctamente en la tabla roomgame');
 
