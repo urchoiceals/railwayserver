@@ -1311,6 +1311,24 @@ app.post("/room/updateVote", (req, res) => {
         res.status(200).json({ success: true, message: 'Voto actualizado correctamente' });
     });
 });
+app.post("/room/resetVote", (req, res) => {
+    const { id_room } = req.body;
+
+    connection.query(
+        'UPDATE roomgame SET vote_game = "" WHERE id_room = ?',
+        [id_room],
+        (error, results) => {
+            if (error) {
+                console.error('Error al resetear votos en roomgame:', error);
+                return res.status(500).json({ success: false, error: 'Error interno del servidor' });
+            }
+
+            console.log('Votos reseteados correctamente en la tabla roomgame');
+            res.status(200).json({ success: true, message: 'Votos reseteados correctamente' });
+        }
+    );
+});
+
 
 
 
