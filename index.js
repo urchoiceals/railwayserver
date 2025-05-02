@@ -1330,46 +1330,26 @@ app.post("/room/resetVote", (req, res) => {
 });
 
 
-// Endpoint para obtener el voto más reciente de un usuario específico
-app.get("/room/WinnerRound/:id_room/:id_user", (req, res) => {
-    const { id_room, id_user } = req.params;
 
-    connection.query(
-        'SELECT vote_game FROM roomgame WHERE id_room = ? AND id_user = ? AND vote_game IS NOT NULL AND vote_game <> "" ORDER BY vote_date DESC LIMIT 1',
-        [id_room, id_user],
-        (error, results) => {
-            if (error) {
-                console.error('Error al obtener el voto del usuario:', error);
-                return res.status(500).json({ error: 'Error interno del servidor' });
-            }
 
-            if (results.length === 0) {
-                return res.status(404).json({ error: 'No se encontraron votos para este usuario' });
-            }
+app.get("/room/WinnerRound/:id_room", (req, res) => {
+    const id_room = req.params.id_room;
 
-            const userVote = results[0].vote_game;
-            res.status(200).json({ userVote });
+    connection.query('SELECT vote_game, COUNT(*) AS vote_count FROM roomgame WHERE id_room = ? AND vote_game IS NOT NULL AND vote_game <> "" GROUP BY vote_game ORDER BY vote_count DESC, vote_game ASC LIMIT 1', [id_room], (error, results) => {
+        if (error) {
+            console.error('Error al obtener el juego más votado:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
         }
-    );
+
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'No se encontraron votos para esta sala' });
+        }
+
+        const mostVotedGame = results[0].vote_game;
+        res.status(200).json({ mostVotedGame });
+    });
 });
 
-// Endpoint para obtener el historial completo de votos de un usuario
-app.get("/room/UserVoteHistory/:id_room/:id_user", (req, res) => {
-    const { id_room, id_user } = req.params;
-
-    connection.query(
-        'SELECT vote_game, vote_date FROM roomgame WHERE id_room = ? AND id_user = ? AND vote_game IS NOT NULL AND vote_game <> "" ORDER BY vote_date',
-        [id_room, id_user],
-        (error, results) => {
-            if (error) {
-                console.error('Error al obtener el historial de votos:', error);
-                return res.status(500).json({ error: 'Error interno del servidor' });
-            }
-
-            res.status(200).json({ voteHistory: results });
-        }
-    );
-});
 
 
 
