@@ -513,79 +513,65 @@ app.post("/categories/update", (req, res) => {
     // Convertir la imagen Base64 a bytes
     const imgBytes = Buffer.from(img_cat, 'base64');
 
-    // Comenzar una transacción
-    connection.beginTransaction(function (err) {
+    connection.getConnection(function(err, connection) {
         if (err) {
-            console.error('Error al iniciar la transacción:', err);
-            return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción' });
+            console.error('Error al obtener conexión:', err);
+            return res.status(500).json({ error: 'Error interno del servidor' });
         }
 
-        // Eliminar los elementos asociados a la categoría
-        connection.query('DELETE FROM elements WHERE id_cat = ?', [id_cat], (error, deleteElementsResult) => {
-            if (error) {
-                connection.rollback(function () {
-                    console.error('Error al eliminar los elementos:', error);
-                    return res.status(500).json({ error: 'Error interno del servidor al eliminar elementos' });
-                });
-                return;
+        // Comenzar una transacción
+        connection.beginTransaction(function (err) {
+            if (err) {
+                connection.release();
+                console.error('Error al iniciar la transacción:', err);
+                return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción' });
             }
 
-            // Eliminar la categoría
-            connection.query('DELETE FROM categories WHERE id_cat = ?', [id_cat], (error, deleteCategoryResult) => {
+            // Verificar si la categoría existe
+            connection.query('SELECT id_cat FROM categories WHERE id_cat = ? AND id_user = ?', 
+                [id_cat, id_user], (error, results) => {
                 if (error) {
-                    connection.rollback(function () {
-                        console.error('Error al eliminar la categoría:', error);
-                        return res.status(500).json({ error: 'Error interno del servidor al eliminar categoría' });
-                    });
-                    return;
+                    return rollback(connection, res, 'Error al verificar la existencia de la categoría:', error);
                 }
 
-                // Insertar la nueva categoría
-                connection.query('INSERT INTO categories (name_cat, img_cat, id_user) VALUES (?, ?, ?)', [name_cat, imgBytes, id_user], (error, categoryResult) => {
+                if (results.length === 0) {
+                    return rollback(connection, res, 'La categoría no existe o no pertenece al usuario');
+                }
+
+                // Actualizar la categoría
+                connection.query('UPDATE categories SET name_cat = ?, img_cat = ? WHERE id_cat = ?', 
+                    [name_cat, imgBytes, id_cat], (error, updateResult) => {
                     if (error) {
-                        connection.rollback(function () {
-                            console.error('Error al insertar la nueva categoría:', error);
-                            return res.status(500).json({ error: 'Error interno del servidor al insertar categoría' });
-                        });
-                        return;
+                        return rollback(connection, res, 'Error al actualizar la categoría:', error);
                     }
 
-                    const newIdCat = categoryResult.insertId; // Obtener el ID de la nueva categoría
-
-                    // Preparar los valores para los nuevos elementos
-                    let query = 'INSERT INTO elements (img_elem, name_elem, id_cat) VALUES ?';
-                    let elementValues = elements.map(element => [Buffer.from(element.img_elem, 'base64'), element.name_elem, newIdCat]);
-
-                    // Insertar los nuevos elementos
-                    connection.query(query, [elementValues], (error, elementResult) => {
+                    // Eliminar los elementos antiguos
+                    connection.query('DELETE FROM elements WHERE id_cat = ?', [id_cat], (error, deleteResult) => {
                         if (error) {
-                            connection.rollback(function () {
-                                console.error('Error al insertar los elementos:', error);
-                                return res.status(500).json({ error: 'Error interno del servidor al insertar elementos' });
-                            });
-                            return;
+                            return rollback(connection, res, 'Error al eliminar elementos antiguos:', error);
                         }
 
-                        // Commit de la transacción si todas las inserciones fueron exitosas
-                        connection.commit(function (err) {
-                            if (err) {
-                                connection.rollback(function () {
-                                    console.error('Error al hacer commit de la transacción:', err);
-                                    return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
-                                });
-                                return;
-                            }
+                        // Insertar los nuevos elementos
+                        if (elements && elements.length > 0) {
+                            let query = 'INSERT INTO elements (img_elem, name_elem, id_cat) VALUES ?';
+                            let elementValues = elements.map(element => [Buffer.from(element.img_elem, 'base64'), element.name_elem, id_cat]);
 
-                            console.log('Transacción completada con éxito.');
-                            res.status(200).json({ message: 'Transacción completada con éxito.' });
-                        });
+                            connection.query(query, [elementValues], (error, insertResult) => {
+                                if (error) {
+                                    return rollback(connection, res, 'Error al insertar nuevos elementos:', error);
+                                }
+
+                                commitTransaction(connection, res);
+                            });
+                        } else {
+                            commitTransaction(connection, res);
+                        }
                     });
                 });
             });
         });
     });
 });
-
 
 app.post("/categories/create", (req, res) => {
     const { name_cat, img_cat, elements, id_user } = req.body;
