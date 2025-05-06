@@ -461,99 +461,51 @@ app.get("/categories/:id_user", (req, res) => {
 
 app.delete("/categories/delete/:id_cat", (req, res) => {
     const id_cat = req.params.id_cat;
-    const id_user = req.user.id; // Asumiendo que tienes autenticación y el usuario está en req.user
 
-    connection.getConnection(function(err, connection) {
+    connection.beginTransaction(function (err) {
         if (err) {
-            console.error('Error al obtener conexión:', err);
-            return res.status(500).json({ error: 'Error interno del servidor al obtener conexión' });
+            console.error('Error al iniciar la transacción:', err);
+            return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción' });
         }
 
-        connection.beginTransaction(function(err) {
-            if (err) {
-                connection.release();
-                console.error('Error al iniciar la transacción:', err);
-                return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción' });
+        // Eliminar los elementos asociados a la categoría
+        connection.query('DELETE FROM elements WHERE id_cat = ?', [id_cat], (error, deleteElementsResult) => {
+            if (error) {
+                connection.rollback(function () {
+                    console.error('Error al eliminar los elementos:', error);
+                    return res.status(500).json({ error: 'Error interno del servidor al eliminar elementos' });
+                });
+                return;
             }
 
-            // Primero verificar que la categoría pertenece al usuario
-            connection.query('SELECT id_user FROM categories WHERE id_cat = ?', [id_cat], (error, results) => {
+            // Eliminar la categoría
+            connection.query('DELETE FROM categories WHERE id_cat = ?', [id_cat], (error, deleteCategoryResult) => {
                 if (error) {
-                    return connection.rollback(() => {
-                        connection.release();
-                        console.error('Error al verificar la categoría:', error);
-                        res.status(500).json({ error: 'Error interno del servidor al verificar categoría' });
+                    connection.rollback(function () {
+                        console.error('Error al eliminar la categoría:', error);
+                        return res.status(500).json({ error: 'Error interno del servidor al eliminar categoría' });
                     });
+                    return;
                 }
 
-                if (results.length === 0) {
-                    return connection.rollback(() => {
-                        connection.release();
-                        console.error('Categoría no encontrada');
-                        res.status(404).json({ error: 'Categoría no encontrada' });
-                    });
-                }
-
-                if (results[0].id_user !== id_user) {
-                    return connection.rollback(() => {
-                        connection.release();
-                        console.error('No tienes permisos para eliminar esta categoría');
-                        res.status(403).json({ error: 'No tienes permisos para eliminar esta categoría' });
-                    });
-                }
-
-                // Eliminar los elementos asociados a la categoría
-                connection.query('DELETE FROM elements WHERE id_cat = ?', [id_cat], (error, deleteElementsResult) => {
-                    if (error) {
-                        return connection.rollback(() => {
-                            connection.release();
-                            console.error('Error al eliminar los elementos:', error);
-                            res.status(500).json({ error: 'Error interno del servidor al eliminar elementos' });
+                // Commit de la transacción si todas las eliminaciones fueron exitosas
+                connection.commit(function (err) {
+                    if (err) {
+                        connection.rollback(function () {
+                            console.error('Error al hacer commit de la transacción:', err);
+                            return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
                         });
+                        return;
                     }
 
-                    // Eliminar la categoría
-                    connection.query('DELETE FROM categories WHERE id_cat = ?', [id_cat], (error, deleteCategoryResult) => {
-                        if (error) {
-                            return connection.rollback(() => {
-                                connection.release();
-                                console.error('Error al eliminar la categoría:', error);
-                                res.status(500).json({ error: 'Error interno del servidor al eliminar categoría' });
-                            });
-                        }
-
-                        // Verificar que se eliminó la categoría
-                        if (deleteCategoryResult.affectedRows === 0) {
-                            return connection.rollback(() => {
-                                connection.release();
-                                console.error('No se pudo eliminar la categoría');
-                                res.status(404).json({ error: 'No se pudo eliminar la categoría' });
-                            });
-                        }
-
-                        // Commit de la transacción
-                        connection.commit(function(err) {
-                            if (err) {
-                                return connection.rollback(() => {
-                                    connection.release();
-                                    console.error('Error al hacer commit de la transacción:', err);
-                                    res.status(500).json({ error: 'Error interno del servidor al confirmar la eliminación' });
-                                });
-                            }
-
-                            connection.release();
-                            console.log('Categoría y elementos asociados eliminados con éxito');
-                            res.status(200).json({ 
-                                message: 'Categoría y elementos asociados eliminados con éxito',
-                                deletedCategoryId: id_cat
-                            });
-                        });
-                    });
+                    console.log('Categoría y elementos asociados eliminados con éxito.');
+                    res.status(200).json({ message: 'Categoría y elementos asociados eliminados con éxito.' });
                 });
             });
         });
     });
 });
+
 
 app.post("/categories/update", (req, res) => {
     const { id_cat, name_cat, img_cat, elements, id_user } = req.body;
