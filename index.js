@@ -459,47 +459,62 @@ app.get("/categories/:id_user", (req, res) => {
     });
 });
 
-app.delete("/categories/delete/:id_cat", async (req, res) => {
+app.delete("/categories/delete/:id_cat", (req, res) => {
     const id_cat = req.params.id_cat;
 
-    try {
-        // Iniciar transacción
-        await connection.promise().beginTransaction();
-
-        // Eliminar elementos asociados
-        const [deleteElementsResult] = await connection.promise().query(
-            'DELETE FROM elements WHERE id_cat = ?', 
-            [id_cat]
-        );
-
-        // Eliminar categoría
-        const [deleteCategoryResult] = await connection.promise().query(
-            'DELETE FROM categories WHERE id_cat = ?', 
-            [id_cat]
-        );
-
-        // Verificar si se eliminó la categoría
-        if (deleteCategoryResult.affectedRows === 0) {
-            await connection.promise().rollback();
-            return res.status(404).json({ error: 'Categoría no encontrada' });
+    // Obtener una conexión del pool
+    connection.getConnection((err, conn) => {
+        if (err) {
+            console.error('Error al obtener conexión del pool:', err);
+            return res.status(500).json({ error: 'Error interno del servidor al obtener conexión' });
         }
 
-        // Commit si todo fue bien
-        await connection.promise().commit();
+        // Iniciar transacción en la conexión obtenida
+        conn.beginTransaction(function (err) {
+            if (err) {
+                conn.release(); // Liberar la conexión
+                console.error('Error al iniciar la transacción:', err);
+                return res.status(500).json({ error: 'Error interno del servidor al iniciar la transacción' });
+            }
 
-        console.log('Categoría y elementos asociados eliminados con éxito.');
-        res.status(200).json({ 
-            message: 'Categoría y elementos asociados eliminados con éxito.',
-            elementsDeleted: deleteElementsResult.affectedRows,
-            categoryDeleted: deleteCategoryResult.affectedRows
+            // Eliminar los elementos asociados a la categoría
+            conn.query('DELETE FROM elements WHERE id_cat = ?', [id_cat], (error, deleteElementsResult) => {
+                if (error) {
+                    return conn.rollback(() => {
+                        conn.release(); // Liberar la conexión
+                        console.error('Error al eliminar los elementos:', error);
+                        return res.status(500).json({ error: 'Error interno del servidor al eliminar elementos' });
+                    });
+                }
+
+                // Eliminar la categoría
+                conn.query('DELETE FROM categories WHERE id_cat = ?', [id_cat], (error, deleteCategoryResult) => {
+                    if (error) {
+                        return conn.rollback(() => {
+                            conn.release(); // Liberar la conexión
+                            console.error('Error al eliminar la categoría:', error);
+                            return res.status(500).json({ error: 'Error interno del servidor al eliminar categoría' });
+                        });
+                    }
+
+                    // Commit de la transacción si todas las eliminaciones fueron exitosas
+                    conn.commit(function (err) {
+                        if (err) {
+                            return conn.rollback(() => {
+                                conn.release(); // Liberar la conexión
+                                console.error('Error al hacer commit de la transacción:', err);
+                                return res.status(500).json({ error: 'Error interno del servidor al hacer commit de la transacción' });
+                            });
+                        }
+
+                        console.log('Categoría y elementos asociados eliminados con éxito.');
+                        conn.release(); // Liberar la conexión
+                        res.status(200).json({ message: 'Categoría y elementos asociados eliminados con éxito.' });
+                    });
+                });
+            });
         });
-
-    } catch (error) {
-        // Rollback en caso de error
-        await connection.promise().rollback();
-        console.error('Error en la operación:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
+    });
 });
 
 app.post("/categories/update", (req, res) => {
