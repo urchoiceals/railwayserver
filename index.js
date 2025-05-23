@@ -18,7 +18,7 @@ app.use(cors());
 
 // O si solo quieres habilitar CORS para tu dominio específico (por ejemplo, localhost:5173)
 app.use(cors({
-    origin: ['http://localhost:5173', 'https://ur-choice-web-tfg.vercel.app'], // Lista de orígenes permitidos
+    origin: ['http://localhost:5173', 'https://ur-choice-web-tfg.vercel.app', 'https://urchoice.es'], // Lista de orígenes permitidos
 }));
 
 
